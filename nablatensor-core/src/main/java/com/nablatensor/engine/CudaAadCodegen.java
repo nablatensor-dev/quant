@@ -278,81 +278,20 @@ public final class CudaAadCodegen {
   private static String ckFwdRhs(AadTape tape, int i, boolean f32, AadCheckpointPlan plan) {
     int a = tape.argA(i);
     int b = tape.argB(i);
-    String va = AadCheckpointPlan.nodeArgA(tape.op(i)) ? plan.vref(a) : null;
-    String vb = AadCheckpointPlan.nodeArgB(tape.op(i)) ? plan.vref(b) : null;
-    String fmax = f32 ? "fmaxf" : "fmax";
-    String fmin = f32 ? "fminf" : "fmin";
-    return switch (tape.op(i)) {
-      case CONST -> literal(tape.constant(i), f32);
-      case INPUT -> "in" + a;
-      case RANDN -> "rng_normal(rng, " + randArg(tape, i) + ")";
-      case RANDU -> "rng_uniform(rng, " + randArg(tape, i) + ")";
-      case ADD -> va + " + " + vb;
-      case SUB -> va + " - " + vb;
-      case MUL -> va + " * " + vb;
-      case DIV -> va + " / " + vb;
-      case NEG -> "-" + va;
-      case EXP -> (f32 ? "__expf(" : "exp(") + va + ")";
-      case LOG -> (f32 ? "logf(" : "log(") + va + ")";
-      case SQRT -> (f32 ? "sqrtf(" : "sqrt(") + va + ")";
-      case ABS -> (f32 ? "fabsf(" : "fabs(") + va + ")";
-      case MAX -> fmax + "(" + va + ", " + vb + ")";
-      case MIN -> fmin + "(" + va + ", " + vb + ")";
-    };
+    AadOpEnum op = tape.op(i);
+    String va = AadCheckpointPlan.nodeArgA(op) ? plan.vref(a) : null;
+    String vb = AadCheckpointPlan.nodeArgB(op) ? plan.vref(b) : null;
+    return AadCheckpointPlan.CudaOpEmissionEnum.forOp(op).forward(
+        literal(tape.constant(i), f32), "in" + a,
+        op == AadOpEnum.RANDN ? "rng_normal(rng, " + randArg(tape, i) + ")" : "0",
+        op == AadOpEnum.RANDU ? "rng_uniform(rng, " + randArg(tape, i) + ")" : "0",
+        va, vb, f32);
   }
 
   private static void ckRevLine(StringBuilder src, AadTape tape, int i, boolean f32,
                                 AadCheckpointPlan plan, int segLo) {
-    int a = tape.argA(i);
-    int b = tape.argB(i);
-    boolean activeA = a >= 0 && tape.isActive(a);
-    boolean activeB = b >= 0 && tape.isActive(b);
-    String di = "d" + i;
-    String da = a >= 0 ? (a >= segLo ? "d" + a : "dc_" + a) : null;
-    String db = b >= 0 ? (b >= segLo ? "d" + b : "dc_" + b) : null;
-    String va = a >= 0 ? plan.vref(a) : null;
-    String vb = b >= 0 ? plan.vref(b) : null;
-    String vi = plan.vref(i);
-    String zero = f32 ? "0.0f" : "0.0";
-    String half = f32 ? "0.5f" : "0.5";
-    switch (tape.op(i)) {
-      case CONST, INPUT, RANDN, RANDU -> {
-      }
-      case ADD -> {
-        if (activeA) src.append("      ").append(da).append(" += ").append(di).append(";\n");
-        if (activeB) src.append("      ").append(db).append(" += ").append(di).append(";\n");
-      }
-      case SUB -> {
-        if (activeA) src.append("      ").append(da).append(" += ").append(di).append(";\n");
-        if (activeB) src.append("      ").append(db).append(" -= ").append(di).append(";\n");
-      }
-      case MUL -> {
-        if (activeA) src.append("      ").append(da).append(" += ").append(di).append(" * ").append(vb).append(";\n");
-        if (activeB) src.append("      ").append(db).append(" += ").append(di).append(" * ").append(va).append(";\n");
-      }
-      case DIV -> {
-        if (activeA) src.append("      ").append(da).append(" += ").append(di).append(" / ").append(vb).append(";\n");
-        if (activeB) src.append("      ").append(db).append(" -= ").append(di).append(" * ").append(vi)
-            .append(" / ").append(vb).append(";\n");
-      }
-      case NEG -> src.append("      ").append(da).append(" -= ").append(di).append(";\n");
-      case EXP -> src.append("      ").append(da).append(" += ").append(di).append(" * ").append(vi).append(";\n");
-      case LOG -> src.append("      ").append(da).append(" += ").append(di).append(" / ").append(va).append(";\n");
-      case SQRT -> src.append("      ").append(da).append(" += ").append(di).append(" * ").append(half)
-          .append(" / ").append(vi).append(";\n");
-      case ABS -> src.append("      ").append(da).append(" += ").append(va).append(" < ").append(zero)
-          .append(" ? -").append(di).append(" : ").append(di).append(";\n");
-      case MAX -> {
-        String taken = "(" + va + " >= " + vb + ")";
-        if (activeA) src.append("      if ").append(taken).append(" ").append(da).append(" += ").append(di).append(";\n");
-        if (activeB) src.append("      if (!").append(taken).append(") ").append(db).append(" += ").append(di).append(";\n");
-      }
-      case MIN -> {
-        String taken = "(" + va + " <= " + vb + ")";
-        if (activeA) src.append("      if ").append(taken).append(" ").append(da).append(" += ").append(di).append(";\n");
-        if (activeB) src.append("      if (!").append(taken).append(") ").append(db).append(" += ").append(di).append(";\n");
-      }
-    }
+    AadCheckpointPlan.CudaOpEmissionEnum.forOp(tape.op(i))
+        .appendCheckpointReverse(src, tape, i, f32, plan, segLo);
   }
 
   private static void emitForward(StringBuilder src, AadTape tape, boolean f32) {

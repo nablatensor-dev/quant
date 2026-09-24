@@ -17,6 +17,7 @@ package com.nablatensor.engine;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.List;
 
 /**
@@ -306,5 +307,65 @@ public final class AadCheckpointPlan {
       }
     }
     return carryMembership[i];
+  }
+
+  public enum CudaOpEmissionEnum {
+    CONST(AadOpEnum.CONST, "{CONST}", null, null, null, null),
+    INPUT(AadOpEnum.INPUT, "{INPUT}", null, null, null, null),
+    RANDN(AadOpEnum.RANDN, "{RANDN}", null, null, null, null),
+    RANDU(AadOpEnum.RANDU, "{RANDU}", null, null, null, null),
+    ADD(AadOpEnum.ADD, "{A} + {B}", "{DI}", "{DI}", null, null),
+    SUB(AadOpEnum.SUB, "{A} - {B}", "{DI}", "-({DI})", null, null),
+    MUL(AadOpEnum.MUL, "{A} * {B}", "{DI} * {B}", "{DI} * {A}", null, null),
+    DIV(AadOpEnum.DIV, "{A} / {B}", "{DI} / {B}", "-({DI} * {VI} / {B})", null, null),
+    NEG(AadOpEnum.NEG, "-{A}", "-({DI})", null, null, null),
+    EXP(AadOpEnum.EXP, "{EXP}({A})", "{DI} * {VI}", null, null, null),
+    LOG(AadOpEnum.LOG, "{LOG}({A})", "{DI} / {A}", null, null, null),
+    SQRT(AadOpEnum.SQRT, "{SQRT}({A})", "{DI} * {HALF} / {VI}", null, null, null),
+    ABS(AadOpEnum.ABS, "{ABS}({A})", "({A} < {ZERO} ? -{DI} : {DI})", null, null, null),
+    MAX(AadOpEnum.MAX, "{FMAX}({A}, {B})", "{DI}", "{DI}", "{A} >= {B}", "!({A} >= {B})"),
+    MIN(AadOpEnum.MIN, "{FMIN}({A}, {B})", "{DI}", "{DI}", "{A} <= {B}", "!({A} <= {B})");
+
+    private static final EnumMap<AadOpEnum, CudaOpEmissionEnum> BY_OP = new EnumMap<>(AadOpEnum.class);
+    static { for (CudaOpEmissionEnum rule : values()) BY_OP.put(rule.op, rule); }
+    private final AadOpEnum op;
+    private final String forwardTemplate, gradientA, gradientB, conditionA, conditionB;
+    CudaOpEmissionEnum(AadOpEnum op, String forwardTemplate, String gradientA, String gradientB,
+                       String conditionA, String conditionB) {
+      this.op=op; this.forwardTemplate=forwardTemplate; this.gradientA=gradientA; this.gradientB=gradientB;
+      this.conditionA=conditionA; this.conditionB=conditionB;
+    }
+    public static CudaOpEmissionEnum forOp(AadOpEnum op) { return BY_OP.get(op); }
+    public String forward(String constant, String input, String randn, String randu, String a, String b, boolean f32) {
+      String exp=f32?"__expf":"exp", log=f32?"logf":"log", sqrt=f32?"sqrtf":"sqrt", abs=f32?"fabsf":"fabs";
+      return render(forwardTemplate, constant,input,randn,randu,a==null?"0":a,b==null?"0":b,"0","0","0",f32,exp,log,sqrt,abs);
+    }
+    public void appendCheckpointReverse(StringBuilder src, AadTape tape, int i, boolean f32,
+                                 AadCheckpointPlan plan, int segLo) {
+      int a=tape.argA(i), b=tape.argB(i);
+      boolean activeA=a>=0&&tape.isActive(a), activeB=b>=0&&tape.isActive(b);
+      String da=a>=0?(a>=segLo?"d"+a:"dc_"+a):null, db=b>=0?(b>=segLo?"d"+b:"dc_"+b):null;
+      String va=a>=0?plan.vref(a):null, vb=b>=0?plan.vref(b):null;
+      appendGradient(src,activeA,da,gradientA,conditionA,va,vb,"d"+i,plan.vref(i),f32);
+      appendGradient(src,activeB,db,gradientB,conditionB,va,vb,"d"+i,plan.vref(i),f32);
+    }
+    private static void appendGradient(StringBuilder src, boolean active, String target, String formula,
+                                      String condition, String a, String b, String di, String vi, boolean f32) {
+      if (!active || formula==null) return;
+      String zero=f32?"0.0f":"0.0";
+      String rendered=render(formula,"0","0","0","0",a==null?"0":a,b==null?"0":b,di,vi,zero,f32,"0","0","0","0");
+      String predicate=condition==null?null:render(condition,"0","0","0","0",a==null?"0":a,b==null?"0":b,di,vi,zero,f32,"0","0","0","0");
+      src.append("      ");
+      if(predicate!=null) src.append("if (").append(predicate).append(") ");
+      src.append(target).append(" += ").append(rendered).append(";\n");
+    }
+    private static String render(String template,String constant,String input,String randn,String randu,
+                                 String a,String b,String di,String vi,String zero,boolean f32,
+                                 String exp,String log,String sqrt,String abs) {
+      return template.replace("{CONST}",constant).replace("{INPUT}",input).replace("{RANDN}",randn).replace("{RANDU}",randu)
+          .replace("{A}",a).replace("{B}",b).replace("{DI}",di).replace("{VI}",vi).replace("{ZERO}",zero)
+          .replace("{HALF}",f32?"0.5f":"0.5").replace("{EXP}",exp).replace("{LOG}",log).replace("{SQRT}",sqrt)
+          .replace("{ABS}",abs).replace("{FMAX}",f32?"fmaxf":"fmax").replace("{FMIN}",f32?"fminf":"fmin");
+    }
   }
 }
