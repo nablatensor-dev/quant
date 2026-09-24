@@ -16,10 +16,9 @@
 package com.nablatensor.engine.wgpu;
 
 import com.nablatensor.engine.AadOpEnum;
+import com.nablatensor.engine.AadCheckpointPlan;
 import com.nablatensor.engine.AadOptions;
 import com.nablatensor.engine.AadTape;
-
-import java.util.Arrays;
 
 /**
  * Translates a recorded {@link AadTape} into a WGSL {@code @compute} shader
@@ -341,20 +340,6 @@ final class WgpuAadCodegen {
 
   // ---- checkpointed adjoint ------------------------------------------------
 
-  private static boolean refsA(AadOpEnum op) {
-    return switch (op) {
-      case CONST, INPUT, RANDN -> false;
-      default -> true;
-    };
-  }
-
-  private static boolean refsB(AadOpEnum op) {
-    return switch (op) {
-      case ADD, SUB, MUL, DIV, MAX, MIN -> true;
-      default -> false;
-    };
-  }
-
   /**
    * The forward and adjoint sweeps with the tape cut into {@code segments}
    * pieces at the positions where the fewest values cross. Only those crossing
@@ -366,58 +351,25 @@ final class WgpuAadCodegen {
   private static void emitCheckpointed(StringBuilder src, AadTape tape, Config cfg) {
     int n = tape.size();
     int markets = cfg.markets();
-    int[] lastUse = new int[n];
-    Arrays.fill(lastUse, -1);
-    for (int i = 0; i < n; i++) {
-      AadOpEnum op = tape.op(i);
-      if (refsA(op)) lastUse[tape.argA(i)] = i;
-      if (refsB(op)) lastUse[tape.argB(i)] = i;
-    }
-    int segments = Math.min(cfg.segments(), n);
-    int[] cuts = new int[segments + 1];
-    cuts[segments] = n;
-    for (int s = 1; s < segments; s++) {
-      int target = (int) ((long) s * n / segments);
-      int window = Math.max(1, n / (4 * segments));
-      int best = target;
-      int bestSize = Integer.MAX_VALUE;
-      for (int c = Math.max(cuts[s - 1] + 1, target - window); c <= Math.min(n - 1, target + window); c++) {
-        int size = 0;
-        for (int j = 0; j < c; j++) {
-          if (lastUse[j] >= c) size++;
-        }
-        if (size < bestSize || (size == bestSize && Math.abs(c - target) < Math.abs(best - target))) {
-          bestSize = size;
-          best = c;
-        }
-      }
-      cuts[s] = best;
-    }
-    boolean[] persistent = new boolean[n];
-    for (int s = 1; s < segments; s++) {
-      int c = cuts[s];
-      for (int j = 0; j < c; j++) {
-        if (lastUse[j] >= c) persistent[j] = true;
-      }
-    }
+    AadCheckpointPlan.Analysis analysis = AadCheckpointPlan.balanced(tape, cfg.segments());
+    int[] cuts = analysis.bound();
+    int[] lastUse = analysis.lastUse();
+    boolean[] persistent = analysis.carryUnionMask();
     persistent[tape.outputNode()] = true;
-    for (int j = 0; j < tape.inputCount(); j++) {
-      persistent[tape.inputNode(j)] = true;
-    }
+    for (int j = 0; j < tape.inputCount(); j++) persistent[tape.inputNode(j)] = true;
+    int segments = analysis.segments();
     for (int i = 0; i < n; i++) {
       if (persistent[i]) declareAll(src, tape, cfg, "v", i, null);
     }
 
-    // forward sweep: segment-local values die at the block's end
+    // Forward sweep: segment-local values die at each block's end.
     for (int s = 0; s < segments; s++) {
       src.append("    {\n");
-      for (int i = cuts[s]; i < cuts[s + 1]; i++) {
-        emitNode(src, tape, cfg, i, !persistent[i]);
-      }
+      for (int i = cuts[s]; i < cuts[s + 1]; i++) emitNode(src, tape, cfg, i, !persistent[i]);
       src.append("    }\n");
     }
 
-    // adjoint sweep, last segment first, recomputing each segment's locals
+    // Reverse sweep: recompute each segment's local forward values.
     for (int i = 0; i < n; i++) {
       if (persistent[i] && tape.isActive(i)) declareAll(src, tape, cfg, "d", i, "0.0");
     }
@@ -426,9 +378,7 @@ final class WgpuAadCodegen {
     }
     for (int s = segments - 1; s >= 0; s--) {
       src.append("    {\n");
-      // Recompute from opaque copies of the checkpoint and an opaque re-key of
-      // the generator; otherwise common-subexpression elimination merges the
-      // recomputation with the forward sweep and keeps every value live again.
+      // The runtime zero input keeps recomputation opaque to the compiler.
       src.append("    rng_init((pathLo ^ pc[").append(PC_SEED_LO).append("u]) ^ pc[").append(PC_ZERO).append("u], ")
           .append("(pathHi ^ pc[").append(PC_SEED_HI).append("u]) ^ pc[").append(PC_ZERO).append("u]);\n");
       for (int j = 0; j < cuts[s]; j++) {

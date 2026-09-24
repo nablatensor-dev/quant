@@ -16,11 +16,12 @@
 package com.nablatensor.engine;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
- * Segment-checkpoint layout for a long tape, shared by the CUDA and Vulkan
- * adjoint code generators.
+ * Segment-checkpoint analysis and layout shared by device adjoint code
+ * generators.
  *
  * <p>A fully unrolled reverse sweep keeps every forward value {@code v_i} live
  * until the reverse consumes it — for a 1500-node tape that is a live set no GPU
@@ -58,6 +59,22 @@ public final class AadCheckpointPlan {
   /** Total floats per path in the checkpoint buffer. */
   public final int slotsPerPath;
 
+  /** Generic segment boundaries and carry sets for backends with their own storage strategy. */
+  public record Analysis(int[] bound, int[] lastUse, int[][] carry) {
+    public int segments() {
+      return bound.length - 1;
+    }
+
+    /** Nodes that cross at least one boundary. */
+    public boolean[] carryUnionMask() {
+      boolean[] union = new boolean[lastUse.length];
+      for (int s = 1; s < carry.length; s++) {
+        for (int node : carry[s]) union[node] = true;
+      }
+      return union;
+    }
+  }
+
   private AadCheckpointPlan(int nodes, int[] bound, int[] lastUse, int[][] carry,
                              boolean[] global, int[] sliceOffset, int[][] slice, int slotsPerPath) {
     this.nodes = nodes;
@@ -83,6 +100,83 @@ public final class AadCheckpointPlan {
       case ADD, SUB, MUL, DIV, MAX, MIN -> true;
       default -> false;
     };
+  }
+
+  /** Computes legal cuts near equal-sized targets, preferring cuts with fewer crossing values. */
+  public static Analysis balanced(AadTape tape, int requestedSegments) {
+    int n = tape.size();
+    int segments = Math.max(1, Math.min(requestedSegments, n));
+    int[] provisional = new int[segments + 1];
+    for (int s = 0; s <= segments; s++) {
+      provisional[s] = (int) ((long) s * n / segments);
+    }
+    int[] lastUse = lastUses(tape);
+    int[] bounds = new int[segments + 1];
+    bounds[segments] = n;
+    for (int s = 1; s < segments; s++) {
+      int target = provisional[s];
+      int window = Math.max(1, n / (4 * segments));
+      int low = Math.max(bounds[s - 1] + 1, target - window);
+      int high = Math.min(n - 1, target + window);
+      int best = Math.max(low, Math.min(high, target));
+      int bestSize = Integer.MAX_VALUE;
+      for (int c = low; c <= high; c++) {
+        int size = 0;
+        for (int j = 0; j < c; j++) {
+          if (lastUse[j] >= c) size++;
+        }
+        if (size < bestSize || (size == bestSize && Math.abs(c - target) < Math.abs(best - target))) {
+          best = c;
+          bestSize = size;
+        }
+      }
+      bounds[s] = best;
+    }
+    return analyze(tape, bounds, lastUse);
+  }
+
+  /** Computes last uses and the values crossing each supplied segment boundary. */
+  public static Analysis analyze(AadTape tape, int[] bounds) {
+    return analyze(tape, bounds, lastUses(tape));
+  }
+
+  private static Analysis analyze(AadTape tape, int[] bounds, int[] lastUse) {
+    if (bounds.length < 2 || bounds[0] != 0 || bounds[bounds.length - 1] != tape.size()) {
+      throw new IllegalArgumentException("checkpoint bounds must start at 0 and end at tape size");
+    }
+    for (int s = 1; s < bounds.length; s++) {
+      if (bounds[s] <= bounds[s - 1]) {
+        throw new IllegalArgumentException("checkpoint bounds must be strictly increasing");
+      }
+    }
+    int[][] carry = new int[bounds.length - 1][];
+    carry[0] = new int[0];
+    for (int s = 1; s < bounds.length - 1; s++) {
+      int b = bounds[s];
+      List<Integer> nodes = new ArrayList<>();
+      for (int i = 0; i < b; i++) {
+        if (lastUse[i] >= b) nodes.add(i);
+      }
+      carry[s] = nodes.stream().mapToInt(Integer::intValue).toArray();
+    }
+    return new Analysis(bounds.clone(), lastUse, carry);
+  }
+
+  private static int[] lastUses(AadTape tape) {
+    int n = tape.size();
+    int[] lastUse = new int[n];
+    Arrays.fill(lastUse, -1);
+    for (int j = 0; j < n; j++) {
+      AadOpEnum op = tape.op(j);
+      if (nodeArgA(op)) {
+        lastUse[tape.argA(j)] = j;
+      }
+      if (nodeArgB(op)) {
+        lastUse[tape.argB(j)] = j;
+      }
+    }
+    lastUse[tape.outputNode()] = n;
+    return lastUse;
   }
 
   /**
@@ -122,18 +216,7 @@ public final class AadCheckpointPlan {
       }
     }
 
-    int[] lastUse = new int[n];
-    java.util.Arrays.fill(lastUse, -1);
-    for (int j = 0; j < n; j++) {
-      AadOpEnum op = tape.op(j);
-      if (nodeArgA(op)) {
-        lastUse[tape.argA(j)] = j;
-      }
-      if (nodeArgB(op)) {
-        lastUse[tape.argB(j)] = j;
-      }
-    }
-    lastUse[tape.outputNode()] = n;
+    int[] lastUse = lastUses(tape);
 
     if (tape.outputNode() < bound[segCount - 1]) {
       return null;
@@ -145,30 +228,23 @@ public final class AadCheckpointPlan {
       global[i] = lastUse[i] >= lastInternal && i < lastInternal;
     }
 
-    int[][] carry = new int[segCount][];
-    carry[0] = new int[0];
+    Analysis sharedAnalysis = analyze(tape, bound, lastUse);
+    int[][] carry = sharedAnalysis.carry();
     int[][] slice = new int[segCount][];
     int[] sliceOffset = new int[segCount];
     int running = 0;
     for (int s = 1; s < segCount; s++) {
-      int b = bound[s];
-      List<Integer> c = new ArrayList<>();
       List<Integer> sl = new ArrayList<>();
-      for (int i = 0; i < b; i++) {
-        if (lastUse[i] >= b) {
-          c.add(i);
-          if (!global[i]) {
-            sl.add(i);
-          }
-        }
+      for (int i : carry[s]) {
+        if (!global[i]) sl.add(i);
       }
-      carry[s] = c.stream().mapToInt(Integer::intValue).toArray();
       slice[s] = sl.stream().mapToInt(Integer::intValue).toArray();
       sliceOffset[s] = running;
       running += slice[s].length;
     }
 
-    return new AadCheckpointPlan(n, bound, lastUse, carry, global, sliceOffset, slice, running);
+    return new AadCheckpointPlan(n, bound, sharedAnalysis.lastUse(), sharedAnalysis.carry(),
+        global, sliceOffset, slice, running);
   }
 
   /** Union of every {@code carry[s]}: the nodes that need a persistent reverse accumulator. */

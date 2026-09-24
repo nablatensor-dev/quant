@@ -14,6 +14,17 @@ mvn -o compile          # once
 ./demo/isda-simm-full.sh
 ```
 
+Regenerate a demo's checked-in asciicast and GIF with:
+
+```bash
+./demo/record.sh                    # greeks-on-gpu on Vulkan
+./demo/record.sh greeks-on-gpu      # explicit equivalent
+```
+
+The recorder uses the local `ghcr.io/asciinema/agg` Docker image to render the
+GIF. Set `NABLATENSOR_DEMO_ENGINE` only when intentionally recording another
+supported backend.
+
 | Demo | What you watch happen |
 |---|---|
 | [`frtb-full-on-cuda.sh`](frtb-full-on-cuda.sh) | **FRTB full** — the whole standardised approach typed out in **ten stages**: loading market/trades/rulebook, the 89 demo parameter buckets, one adjoint delta and three **full shocked repricings on the fastest GPU backend**, the CVR arithmetic, netting onto shared factor keys, `LOW`/`MEDIUM`/`HIGH` aggregation for every class and measure, DRC, RRAO, the capital bridge and sign-off. Every formula is visible jshell code; only the parameter tables are loaded from the example class. |
