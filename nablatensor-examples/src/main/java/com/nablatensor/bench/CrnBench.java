@@ -51,6 +51,7 @@ public final class CrnBench {
     int repeat = Integer.getInteger("repeat", 5);
     String engine = System.getProperty("engine", "cpu-jit");
     String mode = System.getProperty("mode", "unspecified");
+    String normal = System.getProperty("nablatensor.jit.normal", "box-muller");
     if (steps <= 0 || scenarios <= 0 || warmup < 0 || repeat <= 0) {
       throw new IllegalArgumentException("steps, scenarios and repeat must be positive; warmup must be nonnegative");
     }
@@ -58,8 +59,8 @@ public final class CrnBench {
     System.out.printf(Locale.ROOT, "# NablaTensor CRN draw-cache bench%n%n");
     System.out.printf(Locale.ROOT, "- machine   : JDK %s, %s %s%n",
         Runtime.version(), System.getProperty("os.name"), System.getProperty("os.arch"));
-    System.out.printf(Locale.ROOT, "- engine    : %s   mode: %s   crn: %s%n",
-        engine, mode, System.getProperty("nablatensor.crn", "off"));
+    System.out.printf(Locale.ROOT, "- engine    : %s   mode: %s   crn: %s   normal: %s%n",
+        engine, mode, System.getProperty("nablatensor.crn", "off"), normal);
     System.out.printf(Locale.ROOT, "- product   : Asian call, %d fixings, fp64%n", steps);
     System.out.printf(Locale.ROOT, "- scenarios : %,d   seed : %d   warmup: %d   repeat: %d%n%n",
         scenarios, seed, warmup, repeat);
