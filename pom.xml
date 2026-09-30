@@ -13,7 +13,7 @@
     write the valuation in Java once, get price and every Greek from one reverse sweep,
     replay millions of scenarios on a bytecode kernel, SIMD or GPU from the same
     recording. Apache-2.0.</description>
-  <url>https://github.com/nablatensor-dev/nablatensor</url>
+  <url>https://nablatensor.com</url>
 
   <licenses>
     <license>
