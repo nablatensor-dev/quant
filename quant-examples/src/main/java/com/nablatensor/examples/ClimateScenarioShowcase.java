@@ -1,0 +1,271 @@
+/*
+ * Copyright 2026 The NablaTensor Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.nablatensor.examples;
+
+import com.jax4j.engine.Nabla;
+import com.nablatensor.quant.EquityMarket;
+import com.nablatensor.quant.MonteCarlo;
+import com.nablatensor.quant.Products;
+import com.nablatensor.scenario.Scenario;
+import com.nablatensor.scenario.ScenarioRunner;
+import com.nablatensor.scenario.ScenarioSet;
+import com.nablatensor.scenario.Shock;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+/**
+ * {@link StressTestShowcase}'s harness, unchanged, fed a longer horizon and a
+ * different macro-scenario set: three NGFS-style transition pathways (orderly,
+ * disorderly, hot-house-world) instead of adverse/severely-adverse, and
+ * five-year checkpoints out to 2050 instead of quarters. No new calculator:
+ * the same record-once / replay-many grid with different scenario data.
+ *
+ * <p>Unlike the stress-test page, remaining maturity is held fixed at one year
+ * at every checkpoint: this book is a steadily-rolled short-dated position
+ * being re-marked under each pathway's cumulative drift, not one trade running
+ * down to expiry over 25 years.
+ *
+ * <p>The three pathway curves below are illustrative shapes chosen to show the
+ * qualitative NGFS story (orderly = smooth and early, disorderly = abrupt and
+ * back-loaded, hot-house-world = continuous physical drag) — they are not the
+ * published NGFS macro-variable paths.
+ *
+ * <p>Run: {@code mvn -q -o -pl nablatensor-examples exec:java
+ * -Dexec.mainClass=com.nablatensor.examples.ClimateScenarioShowcase}
+ */
+public final class ClimateScenarioShowcase {
+
+  private static final double CALL_NOTIONAL = 5_000_000.0;
+  private static final double PUT_NOTIONAL = 3_000_000.0;
+  private static final int HORIZON_YEARS = 25;
+  private static final int[] CHECKPOINTS = {0, 5, 10, 15, 20, 25};
+
+  private ClimateScenarioShowcase() {
+  }
+
+  private static final class Pathway {
+    private final String name;
+    private final double spotTarget;
+    private final double volTarget;
+    private final double rateTarget;
+    private final double power;
+
+    private Pathway(String name, double spotTarget, double volTarget, double rateTarget, double power) {
+      this.name = name;
+      this.spotTarget = spotTarget;
+      this.volTarget = volTarget;
+      this.rateTarget = rateTarget;
+      this.power = power;
+    }
+
+    private static Builder of() { return new Builder(); }
+
+    public String name() { return name; }
+
+    public double spotTarget() { return spotTarget; }
+
+    public double volTarget() { return volTarget; }
+
+    public double rateTarget() { return rateTarget; }
+
+    public double power() { return power; }
+
+    Scenario at(int years) {
+      double f = Math.pow((double) years / HORIZON_YEARS, power);
+      return Scenario.of(name + "@" + (2025 + years),
+          Shock.relative("spot", spotTarget * f),
+          Shock.additive("vol", volTarget * f),
+          Shock.additive("rate", rateTarget * f));
+    }
+
+    private static final class Builder {
+      private String name;
+      private boolean nameSet;
+      private double spotTarget;
+      private boolean spotTargetSet;
+      private double volTarget;
+      private boolean volTargetSet;
+      private double rateTarget;
+      private boolean rateTargetSet;
+      private double power;
+      private boolean powerSet;
+
+      public Builder name(String value) {
+        this.name = value;
+        this.nameSet = true;
+        return this;
+      }
+
+      public Builder spotTarget(double value) {
+        this.spotTarget = value;
+        this.spotTargetSet = true;
+        return this;
+      }
+
+      public Builder volTarget(double value) {
+        this.volTarget = value;
+        this.volTargetSet = true;
+        return this;
+      }
+
+      public Builder rateTarget(double value) {
+        this.rateTarget = value;
+        this.rateTargetSet = true;
+        return this;
+      }
+
+      public Builder power(double value) {
+        this.power = value;
+        this.powerSet = true;
+        return this;
+      }
+
+      public Builder from(Pathway value) {
+        if (value == null) throw new NullPointerException("value");
+        name(value.name());
+        spotTarget(value.spotTarget());
+        volTarget(value.volTarget());
+        rateTarget(value.rateTarget());
+        power(value.power());
+        return this;
+      }
+
+      public Pathway build() {
+        if (!nameSet) throw new IllegalStateException("Missing required value: name");
+        if (!spotTargetSet) throw new IllegalStateException("Missing required value: spotTarget");
+        if (!volTargetSet) throw new IllegalStateException("Missing required value: volTarget");
+        if (!rateTargetSet) throw new IllegalStateException("Missing required value: rateTarget");
+        if (!powerSet) throw new IllegalStateException("Missing required value: power");
+        return new Pathway(name, spotTarget, volTarget, rateTarget, power);
+      }
+    }
+  }
+
+  public static void main(String[] args) {
+    EquityMarket market = EquityMarket.atmOneYear();
+    long scenarios = Long.getLong("scenarios", 500_000L);
+    long seed = Long.getLong("seed", 42L);
+    long bankPositions = Long.getLong("bankPositions", 5_000L);
+    String engine = System.getProperty("engine", "cpu-jit");
+
+    double callUnits = CALL_NOTIONAL / market.spot();
+    double putUnits = PUT_NOTIONAL / market.spot();
+
+    List<Pathway> pathways = List.of(
+        Pathway.of().name("orderly").spotTarget(-0.15).volTarget(0.03).rateTarget(0.010).power(1.0).build(),
+        Pathway.of().name("disorderly").spotTarget(-0.30).volTarget(0.15).rateTarget(0.020).power(2.0).build(),
+        Pathway.of().name("hot-house-world").spotTarget(-0.35).volTarget(0.10).rateTarget(-0.015).power(1.5).build());
+
+    List<Scenario> scenarioList = new ArrayList<>();
+    for (Pathway p : pathways) {
+      for (int years : CHECKPOINTS) {
+        scenarioList.add(p.at(years));
+      }
+    }
+    ScenarioSet grid = new ScenarioSet(scenarioList);
+
+    System.out.printf(Locale.ROOT, "Climate scenario showcase: same book as the stress-test page, %d NGFS-style "
+        + "pathways x %d checkpoints out to %d = %d full-revaluation nodes%n",
+        pathways.size(), CHECKPOINTS.length, 2025 + HORIZON_YEARS, grid.size());
+    System.out.printf(Locale.ROOT, "%,d scenarios/node, engine %s, seed %d%n%n", scenarios, engine, seed);
+
+    try (MonteCarlo<EquityMarket> callPricer = MonteCarlo.of(Products.europeanCall())
+           .market(market).steps(1).fp64().on(engine).build();
+         MonteCarlo<EquityMarket> putPricer = MonteCarlo.of(Products.europeanPut())
+           .market(market).steps(1).fp64().on(engine).build();
+         MonteCarlo<EquityMarket> callGreeks = MonteCarlo.of(Products.europeanCall())
+           .market(market).steps(1).fp64().gradients().on(engine).build()) {
+      long warm = Math.min(scenarios, 20_000L);
+      callPricer.run(warm, seed);
+      putPricer.run(warm, seed);
+      callGreeks.run(warm, seed);
+
+      Map<String, Nabla.TypedEvaluation<EquityMarket>> callPv =
+          ScenarioRunner.run(callPricer, market, grid, scenarios, seed);
+      Map<String, Nabla.TypedEvaluation<EquityMarket>> putPv =
+          ScenarioRunner.run(putPricer, market, grid, scenarios, seed);
+      Map<String, Nabla.TypedEvaluation<EquityMarket>> callDelta =
+          ScenarioRunner.run(callGreeks, market, grid, scenarios, seed);
+
+      double pv0 = portfolioPv(callUnits, callPv.get(pathways.get(0).name() + "@2025"),
+          putUnits, putPv.get(pathways.get(0).name() + "@2025"));
+
+      System.out.printf(Locale.ROOT, "%-18s", "loss vs. 2025 mark");
+      for (int years : CHECKPOINTS) {
+        System.out.printf(Locale.ROOT, "%10d", 2025 + years);
+      }
+      System.out.println();
+
+      String worstName = null;
+      double worstLoss = Double.POSITIVE_INFINITY;
+      for (Pathway p : pathways) {
+        System.out.printf(Locale.ROOT, "%-18s", p.name());
+        for (int years : CHECKPOINTS) {
+          String name = p.name() + "@" + (2025 + years);
+          double pv = portfolioPv(callUnits, callPv.get(name), putUnits, putPv.get(name));
+          double loss = pv - pv0;
+          System.out.printf(Locale.ROOT, "%10.0f", loss);
+          if (loss < worstLoss) {
+            worstLoss = loss;
+            worstName = name;
+          }
+        }
+        System.out.println();
+      }
+      System.out.println();
+
+      System.out.printf(Locale.ROOT, "worst projected loss   %12.0f  at %s%n", worstLoss, worstName);
+      System.out.printf(Locale.ROOT, "call-leg spot delta there, from the same replay: %.2f%n%n",
+          callDelta.get(worstName).gradient(EquityMarket::spot));
+
+      double perPositionSeconds = (totalSeconds(callPv) + totalSeconds(putPv)) / 2.0;
+      double projectedSeconds = perPositionSeconds * bankPositions;
+      System.out.printf(Locale.ROOT, "one position's %d-node grid  %s%n", grid.size(), wall(perPositionSeconds));
+      System.out.printf(Locale.ROOT, "%,d-position book, same grid %s%n%n", bankPositions, wall(projectedSeconds));
+
+      System.out.println("Same ScenarioRunner replay as the stress-test page, no new calculator: only the");
+      System.out.println("macro-scenario set (NGFS pathways instead of adverse/severely-adverse) and the");
+      System.out.println("horizon (decades of checkpoints instead of quarters) changed. The real regulatory");
+      System.out.println("grid steps annually, not every five years — this is a scaled-down illustration of");
+      System.out.println("the same grid shape, and the pathway curves above are illustrative, not the");
+      System.out.println("published NGFS macro-variable paths.");
+      System.out.println("What this does not cover: climate-economic scenario construction, sector");
+      System.out.println("transition modelling, physical-hazard mapping and counterparty-level emissions");
+      System.out.println("data — those sit outside a pricing engine.");
+    }
+  }
+
+  private static double portfolioPv(double callUnits, Nabla.TypedEvaluation<EquityMarket> call,
+                                    double putUnits, Nabla.TypedEvaluation<EquityMarket> put) {
+    return callUnits * call.value() - putUnits * put.value();
+  }
+
+  private static double totalSeconds(Map<String, Nabla.TypedEvaluation<EquityMarket>> results) {
+    return results.values().stream().mapToDouble(Nabla.TypedEvaluation::seconds).sum();
+  }
+
+  private static String wall(double seconds) {
+    if (seconds < 90.0) {
+      return String.format(Locale.ROOT, "%.3f s", seconds);
+    }
+    if (seconds < 5_400.0) {
+      return String.format(Locale.ROOT, "%.1f min", seconds / 60.0);
+    }
+    return String.format(Locale.ROOT, "%.2f h", seconds / 3_600.0);
+  }
+}

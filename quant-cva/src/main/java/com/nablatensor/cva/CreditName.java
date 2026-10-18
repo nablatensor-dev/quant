@@ -1,0 +1,119 @@
+/*
+ * Copyright 2026 The NablaTensor Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.nablatensor.cva;
+
+import com.nablatensor.codegen.Of;
+
+/**
+ * A credit name — the counterparty of a netting set or the reference of a CDS
+ * hedge — with the curve that drives its default and the rating / sector keys
+ * the BA-CVA and SA-CVA parameter tables look up.
+ *
+ * @param id       identifier, unique within a portfolio
+ * @param curve    the counterparty hazard curve
+ * @param recovery assumed recovery rate on default, in {@code [0, 1)}
+ * @param rating   credit-quality bucket for the BA-CVA risk weight
+ * @param sector   sector bucket for the BA-CVA risk weight and SA-CVA correlations
+ */
+@Of
+public final class CreditName {
+
+  private final String id;
+  private final HazardCurve curve;
+  private final double recovery;
+  private final RatingEnum rating;
+  private final SectorEnum sector;
+  static CreditName create(String id, HazardCurve curve, double recovery, RatingEnum rating, SectorEnum sector) {
+    return new CreditName(id, curve, recovery, rating, sector);
+  }
+
+  public static CreditNameBuilder of() {
+    return new CreditNameBuilder();
+  }
+
+  public String id() {
+    return id;
+  }
+
+  public HazardCurve curve() {
+    return curve;
+  }
+
+  public double recovery() {
+    return recovery;
+  }
+
+  public RatingEnum rating() {
+    return rating;
+  }
+
+  public SectorEnum sector() {
+    return sector;
+  }
+
+  private CreditName(String id, HazardCurve curve, double recovery, RatingEnum rating, SectorEnum sector) {
+    if (!(recovery >= 0.0 && recovery < 1.0)) {
+      throw new IllegalArgumentException("recovery must be in [0, 1), got " + recovery);
+    }
+    this.id = id;
+    this.curve = curve;
+    this.recovery = recovery;
+    this.rating = rating;
+    this.sector = sector;
+  }
+
+  public double lossGivenDefault() {
+    return 1.0 - recovery;
+  }
+
+  /** Credit-quality buckets used by the BA-CVA risk-weight table (MAR50.5). */
+  public enum RatingEnum {
+    /** Prime — highest credit quality. */
+    AAA,
+    /** High grade. */
+    AA,
+    /** Upper medium grade. */
+    A,
+    /** Lower medium grade — the lowest investment-grade bucket. */
+    BBB,
+    /** Non-investment-grade / speculative. */
+    BB,
+    /** Highly speculative. */
+    B,
+    /** Substantial risk — near or in default. */
+    CCC,
+    /** No external rating available; treated at the highest risk weight. */
+    UNRATED
+  }
+
+  /** SectorEnum buckets used by the BA-CVA risk weights and the SA-CVA correlations. */
+  public enum SectorEnum {
+    /** Central governments and central banks. */
+    SOVEREIGN,
+    /** Regional and local governments, and government-backed non-financial entities. */
+    LOCAL_GOVERNMENT,
+    /** Banks, broker-dealers, insurers and other financial institutions. */
+    FINANCIAL,
+    /** Non-financial corporates outside the sectors called out separately. */
+    CORPORATE,
+    /** Consumer goods and services, healthcare, transport. */
+    CONSUMER,
+    /** Technology and telecommunications. */
+    TECH,
+    /** Anything not covered by the other buckets. */
+    OTHER
+  }
+}

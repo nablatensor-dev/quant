@@ -1,151 +1,85 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<?xml version='1.0' encoding='UTF-8'?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-
   <groupId>com.nablatensor</groupId>
-  <artifactId>nablatensor-parent</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <artifactId>quant</artifactId>
+  <version>0.3.0</version>
   <packaging>pom</packaging>
-  <name>NablaTensor</name>
-  <description>Adjoint automatic differentiation for quantitative finance on the JVM:
-    write the valuation in Java once, get price and every Greek from one reverse sweep,
-    replay millions of scenarios on a bytecode kernel, SIMD or GPU from the same
-    recording. Apache-2.0.</description>
+  <name>quant</name>
+  <description>Quantitative finance, risk and CVA built on JAX4J.</description>
   <url>https://nablatensor.com</url>
-
   <licenses>
     <license>
       <name>The Apache License, Version 2.0</name>
       <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
     </license>
   </licenses>
-
   <developers>
     <developer>
       <id>petrpravda</id>
       <name>Petr Pravda</name>
     </developer>
   </developers>
-
   <scm>
-    <connection>scm:git:https://github.com/nablatensor-dev/nablatensor.git</connection>
-    <developerConnection>scm:git:git@github.com:nablatensor-dev/nablatensor.git</developerConnection>
-    <url>https://github.com/nablatensor-dev/nablatensor</url>
+    <connection>scm:git:https://github.com/nablatensor-dev/quant.git</connection>
+    <developerConnection>scm:git:git@github.com:nablatensor-dev/quant.git</developerConnection>
+    <url>https://github.com/nablatensor-dev/quant</url>
   </scm>
-
-  <!--
-    Java 25 language level (an LTS), built and run with the JDK that Maven itself
-    runs on. The default replay path (cpu-jit) is plain Java: no incubator module,
-    no native library. The simd module adds the jdk.incubator.vector module; GPU
-    backends use java.lang.foreign only (no JNI, no native jars) and gate
-    themselves at runtime through AadEngine.isAvailable().
-  -->
   <properties>
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <jax4j.version>0.1.0</jax4j.version>
+    <quant.backend>vulkan</quant.backend>
     <junit.version>5.11.3</junit.version>
-    <!--
-      JUnit tags excluded from the default test run. The "mc" group holds every
-      test class that can't reasonably run in under a second: Monte-Carlo /
-      closed-form validation, CVA bump-and-revalue reconciliation, and anything
-      that exercises real GPU/OpenCL/Vulkan hardware. `mvn clean package` stays
-      a fast (seconds, not minutes) compile+unit-test loop; use `mvn test -P mc`
-      (or -Dnt.test.excludedGroups=) to run the full set, including these.
-    -->
-    <nt.test.excludedGroups>mc</nt.test.excludedGroups>
   </properties>
-
   <modules>
-    <module>nablatensor-codegen</module>
-    <module>nablatensor-tensor</module>
-    <module>nablatensor-core</module>
-    <module>nablatensor-engine-cpu</module>
-    <module>nablatensor-engine-simd</module>
-    <module>nablatensor-ops</module>
-    <module>nablatensor-engine-cuda</module>
-    <module>nablatensor-engine-rocm</module>
-    <module>nablatensor-engine-vulkan</module>
-    <module>nablatensor-engine-wgpu</module>
-    <module>nablatensor-engine-opencl</module>
-    <module>nablatensor-quant</module>
-    <module>nablatensor-risk</module>
-    <module>nablatensor-cva</module>
-    <module>nablatensor-examples</module>
+    <module>quant-codegen</module>
+    <module>quant-pricing</module>
+    <module>quant-risk</module>
+    <module>quant-cva</module>
+    <module>quant-examples</module>
   </modules>
-
   <dependencyManagement>
     <dependencies>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-codegen</artifactId>
+        <artifactId>jax4j-core</artifactId>
+        <version>${jax4j.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.nablatensor</groupId>
+        <artifactId>quant-codegen</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-tensor</artifactId>
+        <artifactId>quant-pricing</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-core</artifactId>
+        <artifactId>quant-risk</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-engine-cuda</artifactId>
+        <artifactId>quant-cva</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-engine-rocm</artifactId>
+        <artifactId>quant-examples</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-engine-vulkan</artifactId>
-        <version>${project.version}</version>
+        <artifactId>jax4j-engine-vulkan</artifactId>
+        <version>${jax4j.version}</version>
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-engine-wgpu</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-engine-opencl</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-ops</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-engine-cpu</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-engine-simd</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-quant</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-risk</artifactId>
-        <version>${project.version}</version>
-      </dependency>
-      <dependency>
-        <groupId>com.nablatensor</groupId>
-        <artifactId>nablatensor-cva</artifactId>
-        <version>${project.version}</version>
+        <artifactId>jax4j-engine-wgpu</artifactId>
+        <version>${jax4j.version}</version>
       </dependency>
       <dependency>
         <groupId>org.junit.jupiter</groupId>
@@ -155,7 +89,18 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
-
+  <dependencies>
+    <dependency>
+      <groupId>com.nablatensor</groupId>
+      <artifactId>jax4j-engine-vulkan</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.nablatensor</groupId>
+      <artifactId>jax4j-engine-wgpu</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
   <build>
     <pluginManagement>
       <plugins>
@@ -172,7 +117,13 @@
           <artifactId>maven-surefire-plugin</artifactId>
           <version>3.5.2</version>
           <configuration>
-            <excludedGroups>${nt.test.excludedGroups}</excludedGroups>
+            <includes>
+              <include>**/*GpuValidationTest.java</include>
+            </includes>
+            <argLine>--enable-native-access=ALL-UNNAMED</argLine>
+            <systemPropertyVariables>
+              <quant.backend>${quant.backend}</quant.backend>
+            </systemPropertyVariables>
           </configuration>
         </plugin>
         <plugin>
@@ -183,27 +134,13 @@
       </plugins>
     </pluginManagement>
   </build>
-
   <profiles>
-    <!-- `mvn test -P mc` runs the slow Monte-Carlo validation classes too. -->
     <profile>
-      <id>mc</id>
+      <id>wgpu</id>
       <properties>
-        <nt.test.excludedGroups></nt.test.excludedGroups>
+        <quant.backend>wgpu</quant.backend>
       </properties>
     </profile>
-
-    <!--
-      `mvn -P release deploy` publishes to Maven Central through the Sonatype
-      Central Portal. It attaches -sources and -javadoc jars, GPG-signs every
-      artifact, and uploads one bundle for the whole reactor to
-      central.sonatype.com (server id `central` in ~/.m2/settings.xml; GPG
-      passphrase from the MAVEN_GPG_PASSPHRASE env var). autoPublish is off, so
-      the upload waits in the portal's "Deployments" view for a manual Publish;
-      the build blocks until Central has finished validating it. The examples
-      module sets maven.deploy.skip and stays out of the bundle. This
-      profile is inert for normal build/install.
-    -->
     <profile>
       <id>release</id>
       <build>
@@ -215,7 +152,9 @@
             <executions>
               <execution>
                 <id>attach-sources</id>
-                <goals><goal>jar-no-fork</goal></goals>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
               </execution>
             </executions>
           </plugin>
@@ -226,15 +165,14 @@
             <executions>
               <execution>
                 <id>attach-javadoc</id>
-                <goals><goal>jar</goal></goals>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
               </execution>
             </executions>
             <configuration>
               <quiet>true</quiet>
               <doclint>none</doclint>
-              <!-- simd module references jdk.incubator.vector types -->
-              <additionalOptions>--add-modules jdk.incubator.vector</additionalOptions>
-              <!-- a warnings-only failure must not block the release -->
               <failOnError>false</failOnError>
             </configuration>
           </plugin>
@@ -246,11 +184,12 @@
               <execution>
                 <id>sign-artifacts</id>
                 <phase>verify</phase>
-                <goals><goal>sign</goal></goals>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
               </execution>
             </executions>
             <configuration>
-              <!-- headless signing in CI with MAVEN_GPG_PASSPHRASE set -->
               <gpgArguments>
                 <arg>--pinentry-mode</arg>
                 <arg>loopback</arg>
@@ -265,23 +204,68 @@
             <configuration>
               <publishingServerId>central</publishingServerId>
               <autoPublish>false</autoPublish>
-              <!--
-                Stop right after a successful upload; do not poll the Portal for
-                the VALIDATED state. The poll response deserialises into a fixed
-                model that older plugin builds choke on when Central adds a new
-                field ("Unrecognized field \"warnings\""). autoPublish is off
-                anyway, so validation and the final Publish happen in the
-                Portal's Deployments view: https://central.sonatype.com/publishing/deployments
-              -->
               <waitUntil>UPLOADED</waitUntil>
-              <!--
-                Belt-and-braces with the maven.deploy.skip in these two modules:
-                central-publishing matches excludeArtifacts by bare artifactId
-                and, unlike maven.deploy.skip, always honours it.
-              -->
               <excludeArtifacts>
-                <excludeArtifact>nablatensor-examples</excludeArtifact>
+                <excludeArtifact>quant-examples</excludeArtifact>
               </excludeArtifacts>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>central-artifacts</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-source-plugin</artifactId>
+            <version>3.3.1</version>
+            <executions>
+              <execution>
+                <id>attach-sources</id>
+                <goals>
+                  <goal>jar-no-fork</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-javadoc-plugin</artifactId>
+            <version>3.11.2</version>
+            <executions>
+              <execution>
+                <id>attach-javadoc</id>
+                <goals>
+                  <goal>jar</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <quiet>true</quiet>
+              <doclint>none</doclint>
+              <failOnError>false</failOnError>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-gpg-plugin</artifactId>
+            <version>3.2.7</version>
+            <executions>
+              <execution>
+                <id>sign-artifacts</id>
+                <phase>verify</phase>
+                <goals>
+                  <goal>sign</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
             </configuration>
           </plugin>
         </plugins>

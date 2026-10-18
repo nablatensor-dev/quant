@@ -2,7 +2,7 @@
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT="$(basename "$ROOT")"
+PROJECT="quant"
 OUTPUT="${1:-$ROOT/${PROJECT}-source-$(date +%Y%m%d).tar.gz}"
 
 case "$OUTPUT" in
@@ -19,8 +19,12 @@ trap 'rm -f "$file_list"' EXIT
 cd "$ROOT"
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "not a git repository" >&2; exit 1; }
 
-# The index, not the working tree: the archive holds what is tracked.
-git ls-files -z --cached --exclude-standard > "$file_list"
+# Include the current tree, including renamed source not staged yet.
+# Ignore deleted tracked paths and generated files covered by .gitignore.
+git ls-files -z --cached --others --exclude-standard |
+  while IFS= read -r -d '' path; do
+    if [[ -f "$path" ]]; then printf '%s\0' "$path"; fi
+  done > "$file_list"
 
 [[ -s "$file_list" ]] || { echo "no tracked files found" >&2; exit 1; }
 mkdir -p "$(dirname "$OUTPUT")"

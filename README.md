@@ -1,215 +1,84 @@
-# NablaTensor
+# NablaTensor Quant
 
-**[nablatensor.com](https://nablatensor.com)**
+Quantitative finance, risk and CVA on Java 25, built on
+[JAX4J](https://github.com/nablatensor-dev/jax4j).
 
-[![CI](https://github.com/nablatensor-dev/nablatensor/actions/workflows/ci.yml/badge.svg)](https://github.com/nablatensor-dev/nablatensor/actions/workflows/ci.yml)
-[![Maven Central](https://img.shields.io/maven-central/v/com.nablatensor/nablatensor-core.svg?label=Maven%20Central)](https://central.sonatype.com/artifact/com.nablatensor/nablatensor-core)
+The Maven group is `com.nablatensor`. Quant **0.3.0** uses JAX4J **0.1.0**.
+JAX4J supplies tensors, automatic differentiation, JIT and compute backends;
+quant owns the finance models, products, calibration, risk and CVA APIs.
 
-**Adjoint automatic differentiation for quantitative finance on the JVM. Write the valuation in Java once — get price and every Greek from one reverse sweep, on CPU, SIMD or GPU.**
+| Artifact | Responsibility |
+| --- | --- |
+| `quant` | Maven parent POM |
+| `quant-pricing` | Products, Monte Carlo, models, calibration, curves, analytic oracles, transforms, lattice, credit and scenarios |
+| `quant-risk` | Risk factors, aggregation, VaR/ES and backtesting |
+| `quant-cva` | Exposure simulation, CVA, BA-CVA and SA-CVA |
+| `quant-codegen` | Named construction of finance configuration classes and records |
 
-![Adjoint AD, compiled to Vulkan — a barrier note priced with every Greek](docs/assets/greeks-on-gpu.gif)
+`quant-examples` contains worked examples and is built from source rather than
+published as a library.
 
-Record a Monte-Carlo valuation once in plain Java against `ADouble` scalars.
-NablaTensor flattens it to a tape and replays that tape — millions of scenarios —
-on a generated **bytecode kernel**, on **SIMD**, or on a **GPU**, from the *same*
-recording. One forward sweep gives the price; one reverse sweep gives *all*
-first-order Greeks, at roughly the cost of the price alone.
-
-- **Apache-2.0**, single repo, no CLA.
-- **On Maven Central** — current release **0.2.0**; see [Install](#install) below.
-- **Clone-and-run.** `mvn -o test` is green on a laptop with no GPU, no native
-  library and no incubator flag — the default `cpu-jit` backend is plain Java.
-- **Customizable.** Changing a payoff or a model step is a three-line diff, not a fork.
-
-> **Not** a deep-learning framework, a market-data platform, or a certified
-> regulatory-capital product. It computes the numbers a regulation asks for;
-> sign-off is yours.
-
----
-
-## Install
-
-Published to **Maven Central** — browse the group at
-[central.sonatype.com](https://central.sonatype.com/search?q=g:com.nablatensor).
-Current release: **0.2.0**.
+## Maven
 
 ```xml
 <dependency>
   <groupId>com.nablatensor</groupId>
-  <artifactId>nablatensor-core</artifactId>
-  <version>0.2.0</version>
+  <artifactId>quant-pricing</artifactId>
+  <version>0.3.0</version>
 </dependency>
 <dependency>
   <groupId>com.nablatensor</groupId>
-  <artifactId>nablatensor-quant</artifactId>
-  <version>0.2.0</version>
-</dependency>
-<dependency>
-  <groupId>com.nablatensor</groupId>
-  <artifactId>nablatensor-engine-cpu</artifactId>
-  <version>0.2.0</version>
+  <artifactId>jax4j-engine-vulkan</artifactId>
+  <version>0.1.0</version>
+  <scope>runtime</scope>
 </dependency>
 ```
 
-Add `nablatensor-engine-vulkan` / `-rocm` / `-cuda` / `-opencl` / `-simd` for a
-GPU or SIMD backend — every module is the same `groupId:artifactId:version`
-shape and gates itself at runtime whether or not its toolchain is present.
+Add `quant-risk` or `quant-cva` at the same quant version as needed. Add
+`jax4j-engine-wgpu:0.1.0` for tensor valuation through wgpu-native.
 
----
+## Build and GPU validation
 
-## The benchmark
+Requires JDK 25 and Maven 3.9+.
 
-Arithmetic-average **Asian call**, 252 daily fixings, fp64, 2,000,000 scenarios,
-seed 42. One recording; `value + 5 Greeks` from one adjoint sweep versus the same
-five Greeks by central bump-and-revalue (`1 + 2×5` price-only replays).
-
-_Machine: JDK 25.0.1, Linux amd64, 16 vCPU. Reproduce with the command below — your numbers will differ._
-
-| method | replays | wall clock | speedup |
-|---|--:|--:|--:|
-| **adjoint** — value + 5 Greeks, one reverse sweep | **1** | **1.11 s** | **9.7×** |
-| central bump — 1 + 2×5 price-only revaluations | 11 | 10.76 s | 1.0× |
-
-Same 1536-node tape, every backend this box can run — `1e10`-scenario Asian
-risk run (`1,000,000 × 10,000`), projected from a `1e6` probe:
-
-| engine | precision | scenarios/s | `1e10` run | runs on |
-|---|---|--:|--:|---|
-| `cpu` | fp64 | 1.0×10⁶ | 2.7 h | scalar JVM reference (the oracle) |
-| `cpu-jit` | fp64 | 1.8×10⁶ | 1.6 h | generated straight-line bytecode kernel, segmented for C2 |
-| `simd` | fp64 | 4.0×10⁶ | 42 min | JDK Vector API, 8×fp64/lane (`--add-modules jdk.incubator.vector`) |
-| `rocm` | fp32 | 1.3×10⁷ | 13 min | fused forward+adjoint HIP kernel, HIPRTC-compiled |
-| `vulkan` | fp32 | 1.6×10⁷ | **10 min** | fused GLSL→SPIR-V compute shader, on-device Philox |
-| `cuda` | fp32 | *(no NVIDIA device on this box — see below)* | — | fused forward+adjoint CUDA kernel, NVRTC-compiled |
-
-The dev box has no NVIDIA GPU. On a separate **Tesla T4** run of a heavier
-benchmark — a 252-step down-and-in barrier, 4057-node tape, `value + 5 Greeks`
-([`notebooks/engine-benchmark.ipynb`](notebooks/engine-benchmark.ipynb)) —
-`cuda` does **1.3×10⁷ scenarios/s** (20 M in 1.5 s, warm), ~1.4× ahead of the
-same T4's `opencl` path, with the fp32 result reconciling to the fp64 oracle to
-~1×10⁻⁵. Not directly comparable to the rows above (different tape, different
-machine), but it places `cuda` in the GPU tier as expected.
-
-All backends reproduce the scalar oracle **path-for-path** at equal seed
-(`cpu-jit` bit-exact, the rest to reduction/rounding order; `rocm`/`vulkan`
-price and delta agree to 5 d.p.). See [`docs/validation.md`](docs/validation.md).
-GPU backends gate themselves at runtime — absent a device or its loader they
-report unavailable and selection falls back, so `mvn -o test` stays green on a
-bare laptop.
-
-**Reproduce:**
-
-```bash
-mvn -o -q install
-mvn -o -q -pl nablatensor-examples exec:java \
-  -Dexec.mainClass=com.nablatensor.bench.Benchmarks \
-  -Dscenarios=2000000 -Dsteps=252
+```sh
+mvn -DskipTests package    # compile and package, including retained test sources
+mvn clean verify          # Vulkan validation; requires native libraries and hardware
+mvn -Pwgpu verify         # wgpu tensor validation
 ```
 
----
+Only `*GpuValidationTest` classes execute in the active suite. Requested but
+unavailable devices fail validation. Other retained finance tests compile but
+are outside the current GPU validation. See [validation](docs/validation.md).
 
-## 20 lines
+## European valuation
 
 ```java
 import com.nablatensor.quant.*;
-import com.nablatensor.engine.Nabla;
 
-EquityMarket market = EquityMarket.atmOneYear();          // S0=K=100, sigma=20%, r=3%, T=1y
-
-try (MonteCarlo<EquityMarket> mc = MonteCarlo.of(Products.asianCall())  // Seam 1: swap this line for any payoff
-        .market(market)
-        .steps(252)                                       // or .timeGrid(TimeGrid.of(t1, t2, ...))
-        .greeks()                                         // value + every first-order Greek
-        .on("cpu-jit")                                    // or .fastest(), or "simd" / "vulkan"
-        .build()) {
-
-    Nabla.TypedValuation<EquityMarket> p = mc.run(1_000_000, /*seed*/ 42L);
-
-    System.out.printf("price %.4f  delta %.4f  vega %.4f  rho %.4f  (± %.4f)%n",
-        p.price(), p.greek(EquityMarket::spot), p.greek(EquityMarket::vol),
-        p.greek(EquityMarket::rate), p.standardError());
-
-    // Seam 2: move the market on the compiled kernel — no re-record, no recompile.
-    var bumped = mc.run(market.withSpot(101.0), 1_000_000, 42L);
+try (var mc = MonteCarlo.of(Products.europeanCall())
+    .market(EquityMarket.atmOneYear()).steps(1)
+    .fp32().gradients().on("vulkan").build()) {
+  var result = mc.run(262_144, 42L);
+  System.out.println(result.value());
+  System.out.println(result.gradient(EquityMarket::spot));
 }
 ```
 
-`p.greeks()` returns the gradient as an `EquityMarket` of the same shape
-(`p.greeks().spot()` is delta); `p.greek(EquityMarket::spot)` reads one directly.
+Finance types live under `com.nablatensor`; compute APIs live under `com.jax4j`.
+`TensorEuropean.price` composes JAX4J tensor operations and supports both Vulkan
+and wgpu through `Jit` and `Transforms.valueAndGrad`.
 
-Run the worked version: `VanillaEuropeanGreeks`, `AsianGreeksBackends`,
-`FrtbCurvatureShowcase`, `FrtbFullShowcase`, `SwapThePayoff`,
-`HestonSabrCalibration`, `MnistMlp` in `nablatensor-examples`.
-Docs under [`docs/examples/`](docs/examples/): vanilla, Asian, swap-the-payoff,
-exotic-models, barrier-digital, rates-fx, multi-output, sabr-calibration,
-heston-calibration, mnist-mlp, FRTB curvature; plus
-[`docs/cookbook/custom-ops.md`](docs/cookbook/custom-ops.md).
+## Migration from NablaTensor
 
-Or watch one happen: [`demo/`](demo/) has six narrated jshell sessions —
-`greeks-on-gpu.sh` (a barrier note, every Greek from one sweep, 20 M paths on
-Vulkan), `adjoint-vs-bump.sh` (one reverse sweep vs eleven revaluations),
-`calibrate-a-smile.sh` (a SABR fit with an adjoint gradient), and
-`one-tape-every-backend.sh` (one recording replayed on every backend, each
-checked against the scalar oracle).
+The GitHub repository is now `nablatensor-dev/quant`. Existing NablaTensor
+releases remain available. New `0.3.0` migration POMs under the retired artifact
+names identify their replacements and link to the migration guide.
 
----
+This is a breaking API migration. Some legacy artifacts move to quant; general
+compute artifacts move to JAX4J. OpenCL and the old validation harness have
+retirement notices and no direct replacement library. See
+[the migration guide and artifact map](docs/migration.md).
 
-## What's in the box
-
-| module | what |
-|---|---|
-| `nablatensor-core` | `ADouble`, `AadRecorder`, `AadTape`, the `AadEngine` SPI, `AadResult`, Philox plumbing, the shared CUDA-C tape codegen |
-| `nablatensor-engine-cpu` | CPU replay — a scalar interpreter (the always-available deterministic **oracle**) and a tape→straight-line JVM **bytecode** engine via the Class-File API (the LTS-clean default) |
-| `nablatensor-engine-simd` | JDK Vector API replay — opt-in (`--add-modules jdk.incubator.vector`) |
-| `nablatensor-engine-vulkan` | everything Vulkan (FFM runtime + tensor backend + replay engine): tape → GLSL→SPIR-V fused compute shader, dispatched through the Vulkan loader |
-| `nablatensor-engine-rocm` | everything ROCm/HIP: tape → fused HIP kernel, HIPRTC-compiled, for AMD devices |
-| `nablatensor-engine-cuda` | everything CUDA: tape → fused CUDA kernel, NVRTC-compiled |
-| `nablatensor-engine-opencl` | everything OpenCL: tape → fused OpenCL C kernel (CUDA codegen, rewritten), `clBuildProgram` |
-| `nablatensor-tensor` | internal: the tensor-op SPI (`ComputeBackend`, `DeviceBuffer`, `Shape`) the GPU modules implement |
-| `nablatensor-ops` | smoothed `STEP`/`GT`/band indicators, `N(x)` / `erf` / `pow`, a macro-form custom-op registry — all in primitive nodes, exact adjoint, every backend |
-| `nablatensor-quant` | `EquityMarket` + `GbmPath` + `Products` (European / Asian / lookback) + `MonteCarlo` + `BlackScholes`; `ExoticProducts` (barrier / digital / cliquet / autocallable), `HestonModel` · `SabrModel` · `LocalVolModel` · `HullWhite1F` · `LmmModel`, `BasketOption`, `Hooks` (antithetic / control-variate), `CurveBootstrap` + analytic Jacobian, `Calibrator` (adjoint-gradient L-BFGS), `MultiMetric`; the `Shock` / `Scenario` / `Ladder` / `ScenarioRunner` ladder runner (`setInput` + replay, no recompile); the `BinomialTree` lattice convergence check; the one-factor Gaussian-copula credit / `CdoTranche` pricers |
-| `nablatensor-risk` | `RiskFactor`, `Sensitivities`, `Portfolio` / netting-set composition, `NestedAggregation` (the FRTB/SIMM `√(ΣK² + ΣγSS)` engine), `CorrelationScenarioEnum`, `TimeProfile` |
-| `nablatensor-examples` | worked demos (each also a test and a docs page); the `com.nablatensor.bench` comparison harness above; the `com.nablatensor.validate` evidence pack (replay on every backend at equal seed, diff vs the oracle, bump cross-check → text report) |
-
-Every GPU backend compiles with or without its toolchain present and gates at
-runtime through `AadEngine.isAvailable()`; none is a build- or test-time
-dependency of the `cpu-jit` path.
-
-### The seams (change without forking)
-
-1. **the payoff/model lambda** — `Product<M>` is a functional interface over any `double`-only market record; write the valuation in `ADouble`.
-2. **`setInput`** — market data and model params are re-settable on a compiled kernel (`mc.run(shockedMarket, …)`).
-   `.timeGrid(TimeGrid.of(t1, t2, …))` swaps the schedule (non-uniform sampling) without touching the payoff.
-3. **custom ops** — `CustomOp.registerUnary(name, macro)`; the code generators pick it up on every backend.
-4. **hooks** — `Hooks.antithetic(...)` / `Hooks.ControlVariate.of()...build()` wrap a payoff with a transformed draw stream.
-5. **model blocks** — subclass a `*Model` step block; override `drift()` / `diffusion()`.
-6. **scenario DSL** — `ScenarioRunner.run(kernel, base, ScenarioSet.grid(...), …)`; shocks are data.
-7. **aggregation** — record per-trade; `Portfolio.aggregate()` / `byNettingSet()`; compose buckets and correlations outside the tape.
-8. **backend choice** — `.on("cpu-jit" | "simd" | "vulkan" | …)` or `.fastest()`; same tape, same numbers.
-
----
-
-## Building
-
-Requires JDK 25+ and Maven 3.9+.
-
-```bash
-mvn -o -q test          # green with no GPU, no native lib, no incubator flag
-mvn -o -q install
-```
-
-## Risk-capital showcases
-
-- [`docs/examples/frtb-curvature-showcase.md`](docs/examples/frtb-curvature-showcase.md) — executable shocked-repricing showcase
-- [`docs/examples/frtb-curvature-for-beginners.md`](docs/examples/frtb-curvature-for-beginners.md) — illustrated beginner's guide to the calculation
-- [`docs/examples/portfolio-aggregation.md`](docs/examples/portfolio-aggregation.md) · [`docs/examples/scenario-dsl.md`](docs/examples/scenario-dsl.md)
-
-## Compare
-
-- [`docs/compare/vs-bump-and-revalue.md`](docs/compare/vs-bump-and-revalue.md) — per-product adjoint-vs-bump table
-- [`docs/compare/vs-finmath.md`](docs/compare/vs-finmath.md)
-- [`docs/compare/vs-quantlib.md`](docs/compare/vs-quantlib.md)
-
-## License
-
-Apache-2.0. See [`LICENSE`](LICENSE) and [`NOTICE`](NOTICE).
+Historical notebook/Python/container/demo tooling targets the old layout and is
+not part of the validated release. Release maintainers: [publishing](docs/releasing.md).

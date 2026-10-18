@@ -1,0 +1,107 @@
+/*
+ * Copyright 2026 The NablaTensor Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.nablatensor.cva;
+
+import com.nablatensor.codegen.Of;
+
+/**
+ * A CVA credit hedge recognised by BA-CVA (full version, MAR50.6) and SA-CVA.
+ * A single-name CDS references one counterparty and gets a correlation
+ * {@code r_hc} to it (1.0 for the same legal entity, ~0.8 for a legally related
+ * name, ~0.5 for a same-sector proxy); an index CDS hedges the portfolio and is
+ * recognised through the {@code IH} term.
+ *
+ * @param kind          single-name or index CDS
+ * @param referenceId   the counterparty id a single-name CDS hedges ({@code ""} for an index)
+ * @param notional      hedge notional in reporting currency
+ * @param maturityYears remaining maturity in years
+ * @param riskWeight    the hedge's supervisory credit risk weight (RW_h)
+ * @param correlation   {@code r_hc} to the hedged counterparty (single-name only; {@code 1.0} for an index)
+ */
+@Of
+public final class CvaHedge {
+
+  private final KindEnum kind;
+  private final String referenceId;
+  private final double notional;
+  private final double maturityYears;
+  private final double riskWeight;
+  private final double correlation;
+  static CvaHedge create(KindEnum kind, String referenceId, double notional, double maturityYears, double riskWeight, double correlation) {
+    return new CvaHedge(kind, referenceId, notional, maturityYears, riskWeight, correlation);
+  }
+
+  public static CvaHedgeBuilder of() {
+    return new CvaHedgeBuilder();
+  }
+
+  public KindEnum kind() {
+    return kind;
+  }
+
+  public String referenceId() {
+    return referenceId;
+  }
+
+  public double notional() {
+    return notional;
+  }
+
+  public double maturityYears() {
+    return maturityYears;
+  }
+
+  public double riskWeight() {
+    return riskWeight;
+  }
+
+  public double correlation() {
+    return correlation;
+  }
+
+  public enum KindEnum {
+    /** A CDS referencing one counterparty; eligible for r_hc credit against that name. */
+    SINGLE_NAME_CDS,
+    /** A CDS index hedge; correlation to any single counterparty is fixed at 1.0. */
+    INDEX_CDS
+  }
+
+  private CvaHedge(KindEnum kind, String referenceId, double notional, double maturityYears, double riskWeight, double correlation) {
+    if (!(notional >= 0.0) || !(maturityYears > 0.0) || !(riskWeight >= 0.0)) {
+      throw new IllegalArgumentException("need notional>=0, maturityYears>0, riskWeight>=0");
+    }
+    if (!(correlation >= 0.0 && correlation <= 1.0)) {
+      throw new IllegalArgumentException("r_hc must be in [0, 1], got " + correlation);
+    }
+    this.kind = kind;
+    this.referenceId = referenceId;
+    this.notional = notional;
+    this.maturityYears = maturityYears;
+    this.riskWeight = riskWeight;
+    this.correlation = correlation;
+  }
+
+  /** Supervisory discount factor {@code (1 - e^{-0.05 M}) / (0.05 M)}. */
+  public double supervisoryDiscount() {
+    double x = 0.05 * maturityYears;
+    return x <= 0.0 ? 1.0 : (1.0 - Math.exp(-x)) / x;
+  }
+
+  /** {@code RW_h * M_h * B_h * DF_h} — the hedge's contribution magnitude. */
+  public double discountedWeightedNotional() {
+    return riskWeight * maturityYears * notional * supervisoryDiscount();
+  }
+}

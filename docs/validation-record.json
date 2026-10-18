@@ -1,0 +1,47 @@
+{
+  "project": "com.nablatensor:quant:0.3.0",
+  "date": "2026-10-18",
+  "java": "Zulu OpenJDK 25.0.1",
+  "jax4j_version": "0.1.0",
+  "jax4j_commit": "0056f1e0377d552d2b250818f7741e4489fa3e84",
+  "validation": [
+    {
+      "project": "JAX4J",
+      "backend": "vulkan",
+      "passed": 31,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "project": "JAX4J",
+      "backend": "wgpu",
+      "passed": 36,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "project": "quant",
+      "command": "mvn -o -Pcentral-artifacts verify",
+      "backend": "vulkan",
+      "passed": 4,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "project": "quant",
+      "command": "mvn -o -Pwgpu verify",
+      "backend": "wgpu",
+      "passed": 2,
+      "failed": 0,
+      "skipped": 2,
+      "skip_reason": "Upstream has no scalar wgpu replay adapter"
+    }
+  ],
+  "limits": [
+    "Only Vulkan and wgpu backend tests executed.",
+    "CUDA, ROCm and SIMD artifacts compiled and packaged but were not backend-tested.",
+    "Retained legacy finance tests compiled but were not executed.",
+    "CVA exposure-profile CPU fallback was not exercised."
+  ],
+  "central_bundle_sha256": "fa7863d8c2c5663b5dea270803c84255e999da3831c8579378fbebe80fa5cdce"
+}

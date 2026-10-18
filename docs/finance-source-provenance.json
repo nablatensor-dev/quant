@@ -1,0 +1,13 @@
+{
+  "source_project": "JAX4J before finance extraction",
+  "source_commit": "01dc49e9e45d4ba0713d48e6200039dfdc91ec3a",
+  "original_package": "com.jax4jneo.quant",
+  "destination_package": "com.nablatensor.quant",
+  "file_count": 33,
+  "license": "Apache-2.0",
+  "modifications": [
+    "Finance ownership moved to quant-pricing",
+    "Adapted scalar calls to current com.jax4j evaluation API"
+  ],
+  "current_compute_source_commit": "0056f1e0377d552d2b250818f7741e4489fa3e84"
+}

@@ -1,57 +1,14 @@
-# Contributing to NablaTensor
+# Contributing to quant
 
-Thanks for looking. NablaTensor is Apache-2.0 with **no CLA** — a PR is all it takes.
+Use JDK 25 and Maven 3.9+. Install JAX4J as described in [README](README.md).
+Keep tensor operations, autodiff, JIT and device runtimes in JAX4J. Add finance
+behavior here when JAX4J does not already provide it, and import finance types from quant and compute types from
+JAX4J.
 
-## Ground rules
+Validate with `mvn clean verify` and `mvn -Pwgpu verify` on configured hardware.
+The active tests explicitly select Vulkan or wgpu and fail when the selected
+device is unavailable. Use closed forms or independent host calculations as
+numerical references. Keep the backend validation matrix limited to these two.
 
-- **Every example is a test is a docs page.** A new product or model block ships
-  with a runnable `main` in `nablatensor-examples`, a smoke test, and a Markdown
-  page under `docs/`.
-- **Numbers, not adjectives.** Benchmark and comparison claims come with the
-  harness, the seeds and the machine. Report parity to Monte-Carlo noise.
-- **The engine is fixed; the seams are where you extend.** If your change needs
-  to fork the engine, that is a bug in the seam design — open an issue first.
-- **`cpu-jit` stays clean.** The default backend must build and run with no GPU,
-  no native library and no incubator flag. Accelerated backends gate themselves
-  at runtime through `AadEngine.isAvailable()`.
-
-## Building
-
-Requires JDK 25+ and Maven 3.9+.
-
-```bash
-mvn -o -q test        # must be green with no extra flags
-mvn -o -q install
-```
-
-The `simd` backend needs `--add-modules jdk.incubator.vector`; the
-`nablatensor-examples` test run adds it so `simd` is exercised where present,
-but nothing else depends on it.
-
-## Layout
-
-| module | add here |
-|---|---|
-| `nablatensor-core` | engine internals + shared CUDA-C tape codegen + `DeviceAadExecutable` — rare, discuss first |
-| `nablatensor-engine-cpu` / `-simd` | CPU replay paths (`nablatensor-engine-cpu` holds both the scalar interpreter and the bytecode engine) |
-| `nablatensor-engine-vulkan` / `-rocm` / `-cuda` / `-opencl` | one module per accelerator: the FFM runtime, the tensor `ComputeBackend`, and the replay engine (device codegen + dispatch) |
-| `nablatensor-tensor` | the tensor-op SPI the GPU modules implement — rare, discuss first |
-| `nablatensor-quant` | products, model blocks, the `MonteCarlo` driver, the scenario ladder, lattice convergence, copula credit |
-| `nablatensor-examples` | a worked demo (+ its docs page + smoke test), the `com.nablatensor.bench` comparison harness, and the `com.nablatensor.validate` evidence tooling |
-
-A GPU backend must compile with its toolchain absent and gate at runtime via
-`AadEngine.isAvailable()` (which must never throw) — `mvn -o test` stays green
-on a machine with no GPU.
-
-## Commit / PR
-
-- One logical change per PR. Keep the diff readable.
-- Run `mvn -o -q test` before pushing.
-- Describe the *why*. Link the issue or the regulation/keyword the change serves.
-
-## Scope
-
-See [What's in the box](README.md#whats-in-the-box-mvp--phase-1--phase-2-slice)
-for what's already implemented. MVP-adjacent contributions (more vanilla/exotic payoffs, more model blocks,
-tighter validation) are the easiest to land now. Open an issue or a Discussion
-if you're unsure whether something fits.
+Describe API changes and numerical tolerances in the PR. Performance claims
+should identify workload, device, runtime, seed and synchronization.

@@ -8,7 +8,7 @@ assignees: ''
 
 **What happened**
 <!-- The wrong result or the stack trace. If a backend disagrees with the
-     scalar `cpu` oracle, paste the ModelValidation report. -->
+     analytic reference, include the failing GPU validation report. -->
 
 **Reproduce**
 <!-- Smallest payoff + market + seed + scenario count. A failing test is ideal. -->
@@ -20,7 +20,7 @@ assignees: ''
 <!-- Closed form, published benchmark, or the oracle value. -->
 
 **Environment**
-- NablaTensor version / commit:
+- quant version / commit:
 - `java -version`:
 - OS / arch:
-- Backend (`cpu`, `cpu-jit`, `simd`, ...):
+- Backend (`vulkan` or `wgpu`):

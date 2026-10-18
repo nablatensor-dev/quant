@@ -1,0 +1,102 @@
+/*
+ * Copyright 2026 The NablaTensor Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package com.nablatensor.quant;
+
+import com.nablatensor.quant.OptionType;
+import com.nablatensor.quant.EquityMarket;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import com.jax4j.engine.AadRecorder;
+import com.jax4j.engine.Nabla;
+import com.nablatensor.quant.analytic.GeneralizedBsm;
+import com.nablatensor.quant.estimate.Fit;
+import com.nablatensor.quant.estimate.Garch11;
+import java.util.function.BiConsumer;
+import org.junit.jupiter.api.Tag;
+import org.junit.jupiter.api.Test;
+
+/**
+ * A loose-tolerance run of every model path that the other {@code @Tag("mc")}
+ * validation classes cover in depth. Its cost is dominated by per-pricer
+ * cpu-jit compilation rather than path count, so it can't be shrunk to a
+ * sub-second default-run smoke test either; it runs with {@code -P mc}
+ * alongside the rest.
+ */
+@Tag("mc")
+class McSmokeTest {
+
+  private static final long PATHS = 60_000L;
+
+  private static <M extends Record> double price(M market, BiConsumer<AadRecorder, Nabla.Inputs<M>> v,
+                                                 int steps, long seed) {
+    try (Nabla.TypedEvaluator<M> p = Nabla.model(market, v).fp64().valueOnly().on("cpu-jit").build()) {
+      return p.value().with(market).scenarios(PATHS).seed(seed).run().value();
+    }
+  }
+
+  @Test
+  void mertonAndKouJumpModelsPriceAndCollapseToBlackScholes() {
+    double bs = GeneralizedBsm.of().type(OptionType.CALL).spot(100).strike(100).maturity(1.0).rate(0.03).dividend(0.0).vol(0.2).build().price();
+
+    double merton0 = price(MertonJumpMarket.of().spot(100).strike(100).vol(0.2).rate(0.03).maturity(1.0).jumpIntensity(0.0).jumpMean(-0.1).jumpVol(0.2).build(),
+        MertonJumpModel.european(OptionType.CALL, 1.0, 32), 32, 1L);
+    assertEquals(bs, merton0, 0.06 * bs, "Merton lambda=0 ~ BSM");
+
+    double kou0 = price(KouMarket.of().spot(100).strike(100).vol(0.2).rate(0.03).maturity(1.0).jumpIntensity(0.0).probUp(0.4).etaUp(10.0).etaDown(5.0).build(),
+        KouJumpModel.european(OptionType.CALL, 1.0, 32), 32, 2L);
+    assertEquals(bs, kou0, 0.06 * bs, "Kou lambda=0 ~ BSM");
+
+    double merton = price(MertonJumpMarket.of().spot(100).strike(100).vol(0.16).rate(0.03).maturity(1.0).jumpIntensity(1.2).jumpMean(-0.03).jumpVol(0.2).build(),
+        MertonJumpModel.european(OptionType.CALL, 1.0, 32), 32, 3L);
+    assertTrue(merton > 0.0 && merton < 40.0, "Merton with jumps prices sanely: " + merton);
+  }
+
+  @Test
+  void schwartzFuturesAndSpreadOptionPriceSanely() {
+    SchwartzMarket sch = SchwartzMarket.of().spot(50.0).kappa(1.4).level(Math.log(55.0)).sigma(0.28).rate(0.03).build();
+    double eST = price(sch, SchwartzOneFactor.european(OptionType.CALL, 0.0, 1.0, 48), 48, 5L)
+        * Math.exp(sch.rate() * 1.0);
+    assertEquals(SchwartzOneFactor.futuresPrice(sch, 1.0), eST, 0.03 * eST, "Schwartz E[S_T] ~ futures");
+
+    SpreadMarket sp = SpreadMarket.of().s1(60).s2(45).vol1(0.32).vol2(0.28).yield1(0.0).yield2(0.0).rate(0.03).build();
+    double spread = price(sp, SpreadProducts.spreadOption(6.0, 0.55, 0.5, 32), 32, 7L);
+    double kirk = com.nablatensor.quant.analytic.KirkSpreadOption.price(
+        60, 45, 6.0, 0.32, 0.28, 0.55, 0.03, 0.0, 0.0, 0.5);
+    assertEquals(kirk, spread, 0.08 * kirk + 0.05, "spread MC ~ Kirk");
+  }
+
+  @Test
+  void bermudanLsmProducesALowerBoundWithGreeks() {
+    EquityMarket m = new EquityMarket(40, 40, 0.20, 0.06, 1.0);
+    BermudanLsm.Result r = BermudanLsm.price(m, OptionType.PUT, 8, 4, 2, 0.6, 30_000L, 42L);
+    assertTrue(r.price() >= r.europeanFloor() - 1e-6, "Bermudan >= European floor");
+    assertTrue(r.gradients().spot() > -1.0 && r.gradients().spot() < 0.0, "put delta in (-1, 0)");
+  }
+
+  @Test
+  void garchFitReturnsAStationaryModel() {
+    java.util.Random rng = new java.util.Random(11L);
+    double[] ret = new double[1500];
+    double s2 = 1e-4;
+    for (int i = 0; i < ret.length; i++) {
+      ret[i] = Math.sqrt(s2) * rng.nextGaussian();
+      s2 = 2e-6 + 0.08 * ret[i] * ret[i] + 0.90 * s2;
+    }
+    Fit fit = Garch11.fit(ret);
+    assertTrue(fit.persistence() > 0.0 && fit.persistence() < 1.0, "stationary fit");
+    assertTrue(fit.params().longRunVariance() > 0.0, "positive long-run variance");
+  }
+}
