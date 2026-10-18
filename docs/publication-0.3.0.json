@@ -1,0 +1,17 @@
+{
+  "deployment_id": "1c61ff7d-dd18-490a-86ca-6cdfd1dd9885",
+  "state": "PUBLISHED",
+  "pom_count": 38,
+  "binary_jar_count": 10,
+  "checked_files": 48,
+  "failures": [],
+  "date": "2026-10-18",
+  "groupId": "com.nablatensor",
+  "versions": {
+    "jax4j": "0.1.0",
+    "quant": "0.3.0",
+    "legacy_notices": "0.3.0"
+  },
+  "github_release": "https://github.com/nablatensor-dev/quant/releases/tag/v0.3.0",
+  "relocation_consumer_check": "A fresh Maven cache compiled a consumer of nablatensor-quant:0.3.0 and emitted the expected migration warning."
+}
