@@ -1,0 +1,18 @@
+{
+  "deployment_id": "1f121db3-1e5a-4f81-bfc7-0622ac0116e6",
+  "state": "PUBLISHED",
+  "groupId": "com.nablatensor",
+  "version": "0.4.0",
+  "main_library": "quant",
+  "parent": "quant-parent",
+  "pom_count": 32,
+  "binary_jar_count": 4,
+  "checked_files": 36,
+  "failures": [],
+  "date": "2026-10-18",
+  "github_release": "https://github.com/nablatensor-dev/quant/releases/tag/v0.4.0",
+  "consumer_checks": {
+    "direct_quant_dependency": "BUILD SUCCESS from a fresh Maven cache",
+    "quant_pricing_relocation": "Expected relocation warning and BUILD SUCCESS"
+  }
+}
