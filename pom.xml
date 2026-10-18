@@ -2,10 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.nablatensor</groupId>
-  <artifactId>quant</artifactId>
-  <version>0.3.0</version>
+  <artifactId>quant-parent</artifactId>
+  <version>0.4.0</version>
   <packaging>pom</packaging>
-  <name>quant</name>
+  <name>NablaTensor Quant Parent</name>
   <description>Quantitative finance, risk and CVA built on JAX4J.</description>
   <url>https://nablatensor.com</url>
   <licenses>
@@ -24,6 +24,7 @@
     <connection>scm:git:https://github.com/nablatensor-dev/quant.git</connection>
     <developerConnection>scm:git:git@github.com:nablatensor-dev/quant.git</developerConnection>
     <url>https://github.com/nablatensor-dev/quant</url>
+    <tag>v0.4.0</tag>
   </scm>
   <properties>
     <maven.compiler.release>25</maven.compiler.release>
@@ -34,7 +35,7 @@
   </properties>
   <modules>
     <module>quant-codegen</module>
-    <module>quant-pricing</module>
+    <module>quant</module>
     <module>quant-risk</module>
     <module>quant-cva</module>
     <module>quant-examples</module>
@@ -53,7 +54,7 @@
       </dependency>
       <dependency>
         <groupId>com.nablatensor</groupId>
-        <artifactId>quant-pricing</artifactId>
+        <artifactId>quant</artifactId>
         <version>${project.version}</version>
       </dependency>
       <dependency>

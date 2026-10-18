@@ -1,9 +1,19 @@
-# NablaTensor to quant 0.3.0
+# Migration to quant 0.4.0
 
 The finance project is now **NablaTensor Quant**, hosted at
 https://github.com/nablatensor-dev/quant. Maven groupId remains `com.nablatensor`.
-The quant parent and modules use version `0.3.0`; their JAX4J dependency is pinned
+The quant parent and modules use version `0.4.0`; their JAX4J dependency is pinned
 to `0.1.0` independently.
+
+## Artifact names in 0.4.0
+
+Use `com.nablatensor:quant:0.4.0` as the main library dependency. It is a JAR,
+containing the finance classes previously published in `quant-pricing`.
+Builds using the old `quant` parent must select `quant-parent:0.4.0` instead.
+The other library artifact names remain `quant-risk`, `quant-cva` and
+`quant-codegen`. JAX4J stays at 0.1.0; Java package names and APIs are unchanged
+from quant 0.3.0. `quant-pricing:0.4.0` relocates to `quant:0.4.0`.
+Existing 0.3.0 artifacts remain untouched.
 
 ## Ownership and API changes
 
@@ -12,7 +22,7 @@ risk and CVA. These classes use `com.nablatensor`. JAX4J owns tensor operations,
 autodiff, scalar recording/replay, JIT and backends under `com.jax4j`.
 
 The earlier local migration depended on `jax4j-neo-finance`. Current JAX4J removed
-that module, so its 33 finance classes now belong in `quant-pricing`. They retain
+that module, so its 33 finance classes now belong in the main `quant` module. They retain
 the Apache headers from the source lineage. Tensor/runtime implementations remain
 shared through JAX4J; no local backend modules are restored.
 
@@ -29,7 +39,7 @@ it does not translate source imports or preserve old classes.
 
 ## Retired coordinates
 
-The old published releases are immutable and remain available. Version `0.3.0`
+The old published releases are immutable and remain available. Version `0.4.0`
 under each retired artifact name is a POM-only migration notice. For relocations,
 Maven emits the supplied migration message and resolves the replacement version.
 Consumers pinned to older versions will need to update explicitly to see it.
@@ -41,25 +51,26 @@ Consumers pinned to older versions will need to update explicitly to see it.
 | `nablatensor-backend-vulkan` | `jax4j-engine-vulkan:0.1.0` |
 | `nablatensor-core` | `jax4j-core:0.1.0` |
 | `nablatensor-cpu` | `jax4j-core:0.1.0` |
-| `nablatensor-credit` | `quant-pricing:0.3.0` |
+| `nablatensor-credit` | `quant:0.4.0` |
 | `nablatensor-cuda` | `jax4j-engine-cuda:0.1.0` |
-| `nablatensor-cva` | `quant-cva:0.3.0` |
+| `nablatensor-cva` | `quant-cva:0.4.0` |
 | `nablatensor-engine-cpu` | `jax4j-core:0.1.0` |
 | `nablatensor-engine-cuda` | `jax4j-engine-cuda:0.1.0` |
 | `nablatensor-engine-rocm` | `jax4j-engine-rocm:0.1.0` |
 | `nablatensor-engine-simd` | `jax4j-simd:0.1.0` |
 | `nablatensor-engine-vulkan` | `jax4j-engine-vulkan:0.1.0` |
 | `nablatensor-jit-cpu` | `jax4j-core:0.1.0` |
-| `nablatensor-lattice` | `quant-pricing:0.3.0` |
+| `nablatensor-lattice` | `quant:0.4.0` |
 | `nablatensor-ops` | `jax4j-core:0.1.0` |
-| `nablatensor-parent` | `quant:0.3.0` |
-| `nablatensor-quant` | `quant-pricing:0.3.0` |
-| `nablatensor-risk` | `quant-risk:0.3.0` |
+| `nablatensor-parent` | `quant-parent:0.4.0` |
+| `nablatensor-quant` | `quant:0.4.0` |
+| `nablatensor-risk` | `quant-risk:0.4.0` |
 | `nablatensor-rocm` | `jax4j-engine-rocm:0.1.0` |
-| `nablatensor-scenario` | `quant-pricing:0.3.0` |
+| `nablatensor-scenario` | `quant:0.4.0` |
 | `nablatensor-simd` | `jax4j-simd:0.1.0` |
 | `nablatensor-tensor` | `jax4j-core:0.1.0` |
 | `nablatensor-vulkan` | `jax4j-engine-vulkan:0.1.0` |
+| `quant-pricing` | `quant:0.4.0` |
 | `nablatensor-engine-opencl` | Retired; OpenCL replay is retired and has no supported replacement. Use quant with the JAX4J Vulkan or wgpu tensor backend; this requires an API migration. |
 | `nablatensor-validate` | Retired; The old validation harness is retired. See quant/docs/validation.md for Vulkan and wgpu validation; there is no replacement library artifact. |
 

@@ -4,14 +4,18 @@ Quant versions and `jax4j.version` are independent. Released quant builds must
 use released JAX4J dependencies. Never overwrite a Central version or move an
 existing release tag.
 
-For 0.3.0, the publication consists of:
+For 0.4.0, the publication consists of:
 
-- JAX4J 0.1.0: parent, core, Vulkan, wgpu, CUDA, ROCm and SIMD artifacts. Main JARs
-  match the existing GitHub v0.1.0 assets; sources are built from that tag. The
-  publishing POM adds Central's developer/SCM metadata without moving the tag.
-- quant 0.3.0: parent, codegen, pricing, risk and CVA, plus sources and Javadocs.
-- 24 standalone legacy relocation POMs and two retirement notices from
-  `release/retired-artifacts.json`. Examples are not published as libraries.
+- `quant-parent:0.4.0`: build configuration (POM).
+- `quant:0.4.0`: the main finance library (JAR), replacing `quant-pricing`.
+- `quant-codegen`, `quant-risk` and `quant-cva`, all at 0.4.0.
+- 25 standalone relocation POMs (including `quant-pricing`) and two retirement
+  notices from `release/retired-artifacts.json`.
+
+JAX4J remains pinned to the already-published 0.1.0 release. Do not include it in
+this bundle or try to republish existing Central components. The optional
+`--jax4j-tree` argument is only for a future new JAX4J release. Examples are built
+from source and are not published as a library.
 
 Validate only Vulkan and wgpu. Optional JAX4J CUDA/ROCm/SIMD modules can compile
 without running their hardware; compilation is not evidence of backend behavior.
@@ -22,11 +26,10 @@ source/Javadoc JARs and GPG signatures without uploading. An unlocked local GPG
 signing key is required. Keep Maven publisher credentials outside the repository
 in the `central` server entry of `~/.m2/settings.xml`.
 
-After preparing the matching signed JAX4J tag checkout, assemble a fresh bundle:
+After building signed quant artifacts, assemble a fresh bundle:
 
 ```sh
 python3 scripts/prepare-central-bundle.py \
-  --jax4j-tree /path/to/prepared-jax4j-tag-checkout \
   --output /tmp/quant-central-release
 ```
 
@@ -37,7 +40,7 @@ the manifest and artifact mapping before uploading.
 ```sh
 python3 scripts/central-publisher.py upload \
   --bundle /tmp/quant-central-release/central-bundle.zip \
-  --name 'JAX4J 0.1.0, quant 0.3.0 and NablaTensor migration' \
+  --name 'quant 0.4.0 and artifact migration' \
   --record /tmp/quant-central-release/deployment-id.txt
 python3 scripts/central-publisher.py status --deployment DEPLOYMENT_UUID
 python3 scripts/central-publisher.py publish --deployment DEPLOYMENT_UUID
@@ -48,6 +51,6 @@ command. Credentials are read inside the process and are never command-line
 arguments. Record the deployment ID and successful state. Verify public POM/JAR
 URLs and checksums after Central synchronization.
 
-Commit the reviewed quant release source, tag it `v0.3.0`, and push to the renamed
+Commit the reviewed quant release source, tag it `v0.4.0`, and push to the renamed
 `nablatensor-dev/quant` repository. Create a GitHub release linking the migration
 and validation records. Existing `nablatensor` releases/tags stay preserved.

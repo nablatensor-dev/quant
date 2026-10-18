@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Assemble signed JAX4J, quant and NablaTensor migration POMs for Central."""
+"""Assemble signed quant and migration POMs, optionally including a JAX4J release."""
 import argparse
 import hashlib
 import json
@@ -76,17 +76,18 @@ def legacy_pom(artifact, config, target=None, notice=None):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--jax4j-tree', type=Path, required=True)
+    parser.add_argument('--jax4j-tree', type=Path, help='Include JAX4J only when publishing a new JAX4J release')
     parser.add_argument('--quant-tree', type=Path, default=Path(__file__).resolve().parents[1])
     parser.add_argument('--output', type=Path, required=True)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     stage = args.output / 'repository'
     artifacts = []
-    for module in ['', 'jax4j-core', 'jax4j-engine-vulkan', 'jax4j-engine-wgpu',
-                   'jax4j-engine-cuda', 'jax4j-engine-rocm', 'jax4j-simd']:
-        artifacts.append(collect(args.jax4j_tree, module, stage))
-    for module in ['', 'quant-codegen', 'quant-pricing', 'quant-risk', 'quant-cva']:
+    if args.jax4j_tree:
+        for module in ['', 'jax4j-core', 'jax4j-engine-vulkan', 'jax4j-engine-wgpu',
+                       'jax4j-engine-cuda', 'jax4j-engine-rocm', 'jax4j-simd']:
+            artifacts.append(collect(args.jax4j_tree, module, stage))
+    for module in ['', 'quant-codegen', 'quant', 'quant-risk', 'quant-cva']:
         artifacts.append(collect(args.quant_tree, module, stage))
     config = json.loads((args.quant_tree / 'release/retired-artifacts.json').read_text())
     for artifact in sorted(set(config['relocations']) | set(config['notices'])):

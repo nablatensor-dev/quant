@@ -3,11 +3,11 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.nablatensor</groupId>
-    <artifactId>quant</artifactId>
-    <version>0.3.0</version>
+    <artifactId>quant-parent</artifactId>
+    <version>0.4.0</version>
   </parent>
-  <artifactId>quant-pricing</artifactId>
-  <name>quant-pricing</name>
+  <artifactId>quant</artifactId>
+  <name>NablaTensor Quant</name>
   <dependencies>
     <dependency>
       <groupId>com.nablatensor</groupId>
@@ -41,4 +41,5 @@
       </plugin>
     </plugins>
   </build>
+  <description>Quantitative finance: products, Monte Carlo, models, calibration, curves, scenarios, lattice and credit on JAX4J.</description>
 </project>

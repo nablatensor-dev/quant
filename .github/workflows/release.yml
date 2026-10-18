@@ -10,7 +10,7 @@ on:
       version:
         description: 'Release version (no -SNAPSHOT)'
         required: true
-        default: '0.3.0'
+        default: '0.4.0'
 
 permissions:
   contents: write
@@ -65,7 +65,7 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir -p dist
-          find . -path '*/target/quant-*.jar' \
+          find . -path '*/target/quant*.jar' \
             ! -name '*-tests.jar' ! -name 'original-*' -exec cp -v {} dist/ \;
           (cd dist && sha256sum *.jar | tee SHA256SUMS.txt)
           zip -j "quant-${{ inputs.version }}-jars.zip" dist/*

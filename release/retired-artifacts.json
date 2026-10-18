@@ -1,32 +1,108 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "groupId": "com.nablatensor",
   "message": "NablaTensor has moved to https://github.com/nablatensor-dev/quant. This is a breaking API migration; update imports and dependencies using docs/migration.md.",
   "relocations": {
-    "nablatensor-parent": ["quant", "0.3.0"],
-    "nablatensor-quant": ["quant-pricing", "0.3.0"],
-    "nablatensor-credit": ["quant-pricing", "0.3.0"],
-    "nablatensor-lattice": ["quant-pricing", "0.3.0"],
-    "nablatensor-scenario": ["quant-pricing", "0.3.0"],
-    "nablatensor-risk": ["quant-risk", "0.3.0"],
-    "nablatensor-cva": ["quant-cva", "0.3.0"],
-    "nablatensor-core": ["jax4j-core", "0.1.0"],
-    "nablatensor-tensor": ["jax4j-core", "0.1.0"],
-    "nablatensor-ops": ["jax4j-core", "0.1.0"],
-    "nablatensor-cpu": ["jax4j-core", "0.1.0"],
-    "nablatensor-engine-cpu": ["jax4j-core", "0.1.0"],
-    "nablatensor-jit-cpu": ["jax4j-core", "0.1.0"],
-    "nablatensor-cuda": ["jax4j-engine-cuda", "0.1.0"],
-    "nablatensor-engine-cuda": ["jax4j-engine-cuda", "0.1.0"],
-    "nablatensor-backend-cuda": ["jax4j-engine-cuda", "0.1.0"],
-    "nablatensor-rocm": ["jax4j-engine-rocm", "0.1.0"],
-    "nablatensor-engine-rocm": ["jax4j-engine-rocm", "0.1.0"],
-    "nablatensor-backend-rocm": ["jax4j-engine-rocm", "0.1.0"],
-    "nablatensor-vulkan": ["jax4j-engine-vulkan", "0.1.0"],
-    "nablatensor-engine-vulkan": ["jax4j-engine-vulkan", "0.1.0"],
-    "nablatensor-backend-vulkan": ["jax4j-engine-vulkan", "0.1.0"],
-    "nablatensor-simd": ["jax4j-simd", "0.1.0"],
-    "nablatensor-engine-simd": ["jax4j-simd", "0.1.0"]
+    "nablatensor-parent": [
+      "quant-parent",
+      "0.4.0"
+    ],
+    "nablatensor-quant": [
+      "quant",
+      "0.4.0"
+    ],
+    "nablatensor-credit": [
+      "quant",
+      "0.4.0"
+    ],
+    "nablatensor-lattice": [
+      "quant",
+      "0.4.0"
+    ],
+    "nablatensor-scenario": [
+      "quant",
+      "0.4.0"
+    ],
+    "nablatensor-risk": [
+      "quant-risk",
+      "0.4.0"
+    ],
+    "nablatensor-cva": [
+      "quant-cva",
+      "0.4.0"
+    ],
+    "nablatensor-core": [
+      "jax4j-core",
+      "0.1.0"
+    ],
+    "nablatensor-tensor": [
+      "jax4j-core",
+      "0.1.0"
+    ],
+    "nablatensor-ops": [
+      "jax4j-core",
+      "0.1.0"
+    ],
+    "nablatensor-cpu": [
+      "jax4j-core",
+      "0.1.0"
+    ],
+    "nablatensor-engine-cpu": [
+      "jax4j-core",
+      "0.1.0"
+    ],
+    "nablatensor-jit-cpu": [
+      "jax4j-core",
+      "0.1.0"
+    ],
+    "nablatensor-cuda": [
+      "jax4j-engine-cuda",
+      "0.1.0"
+    ],
+    "nablatensor-engine-cuda": [
+      "jax4j-engine-cuda",
+      "0.1.0"
+    ],
+    "nablatensor-backend-cuda": [
+      "jax4j-engine-cuda",
+      "0.1.0"
+    ],
+    "nablatensor-rocm": [
+      "jax4j-engine-rocm",
+      "0.1.0"
+    ],
+    "nablatensor-engine-rocm": [
+      "jax4j-engine-rocm",
+      "0.1.0"
+    ],
+    "nablatensor-backend-rocm": [
+      "jax4j-engine-rocm",
+      "0.1.0"
+    ],
+    "nablatensor-vulkan": [
+      "jax4j-engine-vulkan",
+      "0.1.0"
+    ],
+    "nablatensor-engine-vulkan": [
+      "jax4j-engine-vulkan",
+      "0.1.0"
+    ],
+    "nablatensor-backend-vulkan": [
+      "jax4j-engine-vulkan",
+      "0.1.0"
+    ],
+    "nablatensor-simd": [
+      "jax4j-simd",
+      "0.1.0"
+    ],
+    "nablatensor-engine-simd": [
+      "jax4j-simd",
+      "0.1.0"
+    ],
+    "quant-pricing": [
+      "quant",
+      "0.4.0"
+    ]
   },
   "notices": {
     "nablatensor-engine-opencl": "OpenCL replay is retired and has no supported replacement. Use quant with the JAX4J Vulkan or wgpu tensor backend; this requires an API migration.",

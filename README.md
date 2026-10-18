@@ -3,14 +3,14 @@
 Quantitative finance, risk and CVA on Java 25, built on
 [JAX4J](https://github.com/nablatensor-dev/jax4j).
 
-The Maven group is `com.nablatensor`. Quant **0.3.0** uses JAX4J **0.1.0**.
+The Maven group is `com.nablatensor`. Quant **0.4.0** uses JAX4J **0.1.0**.
 JAX4J supplies tensors, automatic differentiation, JIT and compute backends;
 quant owns the finance models, products, calibration, risk and CVA APIs.
 
 | Artifact | Responsibility |
 | --- | --- |
-| `quant` | Maven parent POM |
-| `quant-pricing` | Products, Monte Carlo, models, calibration, curves, analytic oracles, transforms, lattice, credit and scenarios |
+| `quant-parent` | Maven parent POM |
+| `quant` | Products, Monte Carlo, models, calibration, curves, analytic oracles, transforms, lattice, credit and scenarios |
 | `quant-risk` | Risk factors, aggregation, VaR/ES and backtesting |
 | `quant-cva` | Exposure simulation, CVA, BA-CVA and SA-CVA |
 | `quant-codegen` | Named construction of finance configuration classes and records |
@@ -23,8 +23,8 @@ published as a library.
 ```xml
 <dependency>
   <groupId>com.nablatensor</groupId>
-  <artifactId>quant-pricing</artifactId>
-  <version>0.3.0</version>
+  <artifactId>quant</artifactId>
+  <version>0.4.0</version>
 </dependency>
 <dependency>
   <groupId>com.nablatensor</groupId>
@@ -69,10 +69,17 @@ Finance types live under `com.nablatensor`; compute APIs live under `com.jax4j`.
 `TensorEuropean.price` composes JAX4J tensor operations and supports both Vulkan
 and wgpu through `Jit` and `Transforms.valueAndGrad`.
 
+## Migration from 0.3.0
+
+The main library is now `com.nablatensor:quant:0.4.0` (a JAR).
+The former `quant` parent POM is now `quant-parent:0.4.0`.
+`quant-pricing:0.4.0` is a relocation POM pointing to `quant:0.4.0`.
+Java packages and finance APIs are unchanged from 0.3.0.
+
 ## Migration from NablaTensor
 
 The GitHub repository is now `nablatensor-dev/quant`. Existing NablaTensor
-releases remain available. New `0.3.0` migration POMs under the retired artifact
+releases remain available. New `0.4.0` migration POMs under the retired artifact
 names identify their replacements and link to the migration guide.
 
 This is a breaking API migration. Some legacy artifacts move to quant; general
