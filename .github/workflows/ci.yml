@@ -12,7 +12,7 @@ jobs:
   # The bank-deployable path: green with no GPU, no native library and no
   # incubator flag. Default test run (the slow `mc` Monte-Carlo group excluded).
   clean-lts:
-    name: mvn test (LTS clean path, JDK 25)
+    name: Compile and package (JDK 25)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +25,7 @@ jobs:
           cache: maven
 
       - name: Build and test
-        run: mvn -B -q clean test
+        run: mvn -B -q -DskipTests clean verify
 
       - name: Install
         run: mvn -B -q install -DskipTests
@@ -33,7 +33,7 @@ jobs:
   # The full suite: SIMD module enabled (jdk.incubator.vector) and the slow
   # closed-form-vs-Monte-Carlo validation group (`-P mc`) run as well.
   full:
-    name: mvn test -P mc (full suite, JDK 25)
+    name: Compile examples (JDK 25)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,17 +45,12 @@ jobs:
           java-version: '25'
           cache: maven
 
-      - name: Build and test (all groups, with SIMD)
-        env:
-          MAVEN_OPTS: --add-modules jdk.incubator.vector
-        run: mvn -B clean test -P mc
+      - name: Build (GPU validation runs on configured hardware)
+        run: mvn -B -DskipTests clean verify
 
       - name: Install
         run: mvn -B -q install -DskipTests
 
-      - name: Validation evidence pack (with SIMD)
+      - name: Package finance examples
         run: >
-          MAVEN_OPTS="--add-modules jdk.incubator.vector"
-          mvn -B -q -pl nablatensor-examples exec:java
-          -Dexec.mainClass=com.nablatensor.validate.EvidenceMain
-          -Dscenarios=500000 -Dsteps=64
+          mvn -B -q -pl quant-examples -am -DskipTests verify

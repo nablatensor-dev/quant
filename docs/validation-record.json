@@ -43,5 +43,5 @@
     "Retained legacy finance tests compiled but were not executed.",
     "CVA exposure-profile CPU fallback was not exercised."
   ],
-  "central_bundle_sha256": "fa7863d8c2c5663b5dea270803c84255e999da3831c8579378fbebe80fa5cdce"
+  "central_bundle_sha256": "7c82224dc6fb9136314ad74936c34cd82e85e591557b6dddc354341573e711fc"
 }

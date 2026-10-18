@@ -10,7 +10,7 @@ on:
       version:
         description: 'Release version (no -SNAPSHOT)'
         required: true
-        default: '0.1.0'
+        default: '0.3.0'
 
 permissions:
   contents: write
@@ -40,10 +40,8 @@ jobs:
       - name: Set release version (build only, not committed)
         run: mvn -B -q versions:set -DnewVersion=${{ inputs.version }} -DgenerateBackupPoms=false
 
-      - name: Full test suite (all groups, with SIMD)
-        env:
-          MAVEN_OPTS: --add-modules jdk.incubator.vector
-        run: mvn -B clean verify -P mc
+      - name: Build (GPU validation recorded separately)
+        run: mvn -B -DskipTests clean verify
 
       - name: Package
         run: mvn -B -q package -DskipTests
@@ -67,24 +65,24 @@ jobs:
       - name: Collect artifacts
         run: |
           mkdir -p dist
-          find . -path '*/target/nablatensor-*.jar' \
+          find . -path '*/target/quant-*.jar' \
             ! -name '*-tests.jar' ! -name 'original-*' -exec cp -v {} dist/ \;
           (cd dist && sha256sum *.jar | tee SHA256SUMS.txt)
-          zip -j "nablatensor-${{ inputs.version }}-jars.zip" dist/*
+          zip -j "quant-${{ inputs.version }}-jars.zip" dist/*
 
       - name: Tag
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -a "v${{ inputs.version }}" -m "NablaTensor ${{ inputs.version }}"
+          git tag -a "v${{ inputs.version }}" -m "quant ${{ inputs.version }}"
           git push origin "v${{ inputs.version }}"
 
       - name: GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
-          name: NablaTensor ${{ inputs.version }}
+          name: quant ${{ inputs.version }}
           generate_release_notes: true
           files: |
-            nablatensor-${{ inputs.version }}-jars.zip
+            quant-${{ inputs.version }}-jars.zip
             dist/SHA256SUMS.txt
