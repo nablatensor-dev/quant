@@ -15,7 +15,7 @@
  */
 package com.nablatensor.examples;
 
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
 import com.nablatensor.quant.Products;

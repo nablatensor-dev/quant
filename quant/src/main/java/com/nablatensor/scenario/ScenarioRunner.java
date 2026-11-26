@@ -18,7 +18,7 @@ package com.nablatensor.scenario;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
 import com.nablatensor.quant.MultiOutput;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

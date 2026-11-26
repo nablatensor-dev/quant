@@ -15,9 +15,9 @@
  */
 package com.nablatensor.quant;
 
-import com.jax4j.engine.AadRecorder;
-import com.jax4j.engine.SDouble;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.AadRecorder;
+import com.nablatensor.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.Nabla;
 
 /**
  * The MVP catalogue: vanilla European, arithmetic Asian and fixed-strike

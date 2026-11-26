@@ -20,8 +20,8 @@ import com.nablatensor.quant.OptionType;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MultiOutput;
 import com.nablatensor.quant.GbmPath;
-import com.jax4j.engine.SDouble;
-import com.jax4j.ops.Smooth;
+import com.nablatensor.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.ops.Smooth;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

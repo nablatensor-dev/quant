@@ -39,7 +39,7 @@ class BasketAndCurveTest {
     double[] w = {1.0, 0.0, 0.0};                         // all weight on asset 1
     double[][] corr = {{1, 0.3, 0.2}, {0.3, 1, 0.4}, {0.2, 0.4, 1}};
     double px;
-    try (var pricer = com.jax4j.engine.Nabla.model(m,
+    try (var pricer = com.nablatensor.jax4j.engine.Nabla.model(m,
         BasketOption.option(OptionType.CALL, w, 100.0, corr, 1.0, 32))
         .fp64().valueOnly().on("cpu-jit").build()) {
       px = pricer.value().with(m).scenarios(600_000L).seed(7L).run().value();

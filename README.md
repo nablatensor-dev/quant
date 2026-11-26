@@ -3,7 +3,7 @@
 Quantitative finance, risk and CVA on Java 25, built on
 [JAX4J](https://github.com/nablatensor-dev/jax4j).
 
-The Maven group is `com.nablatensor`. Quant **0.4.0** uses JAX4J **0.1.0**.
+The Maven group is `com.nablatensor`. Quant **0.5.0** uses JAX4J **0.2.3**.
 JAX4J supplies tensors, automatic differentiation, JIT and compute backends;
 quant owns the finance models, products, calibration, risk and CVA APIs.
 
@@ -24,18 +24,18 @@ published as a library.
 <dependency>
   <groupId>com.nablatensor</groupId>
   <artifactId>quant</artifactId>
-  <version>0.4.0</version>
+  <version>0.5.0</version>
 </dependency>
 <dependency>
   <groupId>com.nablatensor</groupId>
   <artifactId>jax4j-engine-vulkan</artifactId>
-  <version>0.1.0</version>
+  <version>0.2.3</version>
   <scope>runtime</scope>
 </dependency>
 ```
 
 Add `quant-risk` or `quant-cva` at the same quant version as needed. Add
-`jax4j-engine-wgpu:0.1.0` for tensor valuation through wgpu-native.
+`jax4j-engine-wgpu:0.2.3` for tensor valuation through wgpu-native.
 
 ## Build and GPU validation
 
@@ -65,9 +65,16 @@ try (var mc = MonteCarlo.of(Products.europeanCall())
 }
 ```
 
-Finance types live under `com.nablatensor`; compute APIs live under `com.jax4j`.
+Finance types live under `com.nablatensor`; compute APIs live under `com.nablatensor.jax4j`.
 `TensorEuropean.price` composes JAX4J tensor operations and supports both Vulkan
 and wgpu through `Jit` and `Transforms.valueAndGrad`.
+
+## Migration from 0.4.0
+
+Quant 0.5.0 uses JAX4J 0.2.3. Update imports from `com.jax4j.*` to
+`com.nablatensor.jax4j.*` and recompile code that uses JAX4J types in Quant APIs,
+such as custom `Product` implementations or explicitly typed Monte Carlo results.
+Use matching JAX4J versions for the optional engines.
 
 ## Migration from 0.3.0
 

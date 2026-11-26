@@ -33,7 +33,7 @@ import com.nablatensor.quant.TimeGrid;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.Arrays;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 

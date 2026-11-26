@@ -1,7 +1,7 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.quant.EquityMarket;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import java.util.function.ToDoubleFunction;
 
 /** Typed market-factor accessors and bumps for equity Greek examples. */

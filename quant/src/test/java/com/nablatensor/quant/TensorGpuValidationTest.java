@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import com.nablatensor.quant.BlackScholes;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.OptionType;
-import com.jax4j.tensor.*;
+import com.nablatensor.jax4j.tensor.*;
 import com.nablatensor.quant.analytic.Normal;
 import org.junit.jupiter.api.Test;
 

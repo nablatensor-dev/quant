@@ -7,7 +7,7 @@ package com.nablatensor.quant;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import com.nablatensor.codegen.Of;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import org.junit.jupiter.api.Test;
 
 final class BuilderMarketTest {

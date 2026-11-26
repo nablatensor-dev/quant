@@ -16,10 +16,10 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.quant.OptionType;
-import com.jax4j.engine.AadRecorder;
-import com.jax4j.engine.Nabla;
-import com.jax4j.engine.SDouble;
-import com.jax4j.ops.Smooth;
+import com.nablatensor.jax4j.engine.AadRecorder;
+import com.nablatensor.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.ops.Smooth;
 import java.util.function.BiConsumer;
 
 /**

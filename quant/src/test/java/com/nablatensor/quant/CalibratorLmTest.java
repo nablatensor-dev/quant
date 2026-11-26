@@ -20,7 +20,7 @@ import com.nablatensor.quant.Calibrator;
 import com.nablatensor.quant.SabrHagan;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.SDouble;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Tag;

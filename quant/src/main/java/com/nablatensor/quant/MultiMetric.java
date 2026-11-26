@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant;
 
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import java.util.LinkedHashMap;
 import java.util.Map;
 

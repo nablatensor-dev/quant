@@ -15,8 +15,8 @@
  */
 package com.nablatensor.quant;
 
-import com.jax4j.engine.JitOptimizations;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.JitOptimizations;
+import com.nablatensor.jax4j.engine.Nabla;
 
 /**
  * Records a {@link Product} once against a market record {@code M} and replays it

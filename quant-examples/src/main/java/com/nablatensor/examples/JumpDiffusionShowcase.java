@@ -15,7 +15,7 @@
  */
 package com.nablatensor.examples;
 
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import com.nablatensor.quant.KouJumpModel;
 import com.nablatensor.quant.KouMarket;
 import com.nablatensor.quant.MertonJumpMarket;
@@ -79,7 +79,7 @@ public final class JumpDiffusionShowcase {
   }
 
   private static <M extends Record> double price(M market,
-      java.util.function.BiConsumer<com.jax4j.engine.AadRecorder, Nabla.Inputs<M>> v,
+      java.util.function.BiConsumer<com.nablatensor.jax4j.engine.AadRecorder, Nabla.Inputs<M>> v,
       long paths, long seed) {
     try (Nabla.TypedEvaluator<M> p = Nabla.model(market, v).fp64().valueOnly().on("cpu-jit").build()) {
       return p.value().with(market).scenarios(paths).seed(seed).run().value();

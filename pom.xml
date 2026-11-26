@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.nablatensor</groupId>
   <artifactId>quant-parent</artifactId>
-  <version>0.4.0</version>
+  <version>0.5.0</version>
   <packaging>pom</packaging>
   <name>NablaTensor Quant Parent</name>
   <description>Quantitative finance, risk and CVA built on JAX4J.</description>
@@ -24,12 +24,12 @@
     <connection>scm:git:https://github.com/nablatensor-dev/quant.git</connection>
     <developerConnection>scm:git:git@github.com:nablatensor-dev/quant.git</developerConnection>
     <url>https://github.com/nablatensor-dev/quant</url>
-    <tag>v0.4.0</tag>
+    <tag>v0.5.0</tag>
   </scm>
   <properties>
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <jax4j.version>0.1.0</jax4j.version>
+    <jax4j.version>0.2.3</jax4j.version>
     <quant.backend>vulkan</quant.backend>
     <junit.version>5.11.3</junit.version>
   </properties>
@@ -175,6 +175,7 @@
               <quiet>true</quiet>
               <doclint>none</doclint>
               <failOnError>false</failOnError>
+              <additionalOptions><additionalOption>--no-fonts</additionalOption></additionalOptions>
             </configuration>
           </plugin>
           <plugin>
@@ -247,6 +248,7 @@
               <quiet>true</quiet>
               <doclint>none</doclint>
               <failOnError>false</failOnError>
+              <additionalOptions><additionalOption>--no-fonts</additionalOption></additionalOptions>
             </configuration>
           </plugin>
           <plugin>

@@ -15,9 +15,9 @@
  */
 package com.nablatensor.quant;
 
-import com.jax4j.engine.AadRecorder;
-import com.jax4j.engine.Nabla;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.AadRecorder;
+import com.nablatensor.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.SDouble;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -38,7 +38,7 @@ import java.util.Map;
  *         SDouble sT = s0.mul(r.sub(vol.mul(vol).mul(0.5)).add(vol.mul(rec.randn())).exp());
  *         return Map.of(
  *             "call",    sT.sub(k).max(0.0).mul(r.neg().exp()),
- *             "digital", com.jax4j.ops.Smooth.gt(rec, sT, k, 1.0).mul(r.neg().exp()));
+ *             "digital", com.nablatensor.jax4j.ops.Smooth.gt(rec, sT, k, 1.0).mul(r.neg().exp()));
  *       }).on("cpu-jit").build()) {
  *
  *   MultiOutput.Result res = mo.run(1_000_000, 42L);

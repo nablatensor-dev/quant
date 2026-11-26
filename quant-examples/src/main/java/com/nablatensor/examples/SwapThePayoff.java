@@ -15,12 +15,12 @@
  */
 package com.nablatensor.examples;
 
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.SDouble;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.GbmPath;
 import com.nablatensor.quant.MonteCarlo;
 import com.nablatensor.quant.Product;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import com.nablatensor.quant.Products;
 import java.util.LinkedHashMap;
 import java.util.Locale;

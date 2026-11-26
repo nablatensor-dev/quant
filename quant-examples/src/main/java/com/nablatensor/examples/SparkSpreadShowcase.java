@@ -15,7 +15,7 @@
  */
 package com.nablatensor.examples;
 
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import com.nablatensor.quant.OptionType;
 import com.nablatensor.quant.SchwartzMarket;
 import com.nablatensor.quant.SchwartzOneFactor;
@@ -73,7 +73,7 @@ public final class SparkSpreadShowcase {
   }
 
   private static double[] adjoint(SpreadMarket m,
-      java.util.function.BiConsumer<com.jax4j.engine.AadRecorder, Nabla.Inputs<SpreadMarket>> v,
+      java.util.function.BiConsumer<com.nablatensor.jax4j.engine.AadRecorder, Nabla.Inputs<SpreadMarket>> v,
       long paths) {
     try (Nabla.TypedEvaluator<SpreadMarket> p = Nabla.model(m, v).fp64().gradients().on("cpu-jit").build()) {
       Nabla.TypedEvaluation<SpreadMarket> val = p.value().with(m).scenarios(paths).seed(42L).run();

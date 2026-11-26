@@ -15,8 +15,8 @@
  */
 package com.nablatensor.quant;
 
-import com.jax4j.engine.AadRecorder;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.AadRecorder;
+import com.nablatensor.jax4j.engine.SDouble;
 
 /**
  * Geometric Brownian motion as a composable model step (Seam 5).

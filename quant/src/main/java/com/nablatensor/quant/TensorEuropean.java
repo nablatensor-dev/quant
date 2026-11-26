@@ -1,8 +1,8 @@
 package com.nablatensor.quant;
 
 import com.nablatensor.quant.OptionType;
-import com.jax4j.tensor.Shape;
-import com.jax4j.tensor.Tensor;
+import com.nablatensor.jax4j.tensor.Shape;
+import com.nablatensor.jax4j.tensor.Tensor;
 
 /** European GBM valuation composed from JAX4J tensor operations on Vulkan or wgpu. */
 public final class TensorEuropean {

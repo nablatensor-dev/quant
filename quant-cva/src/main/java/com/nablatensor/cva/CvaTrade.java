@@ -15,8 +15,8 @@
  */
 package com.nablatensor.cva;
 
-import com.jax4j.engine.AadRecorder;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.AadRecorder;
+import com.nablatensor.jax4j.engine.SDouble;
 
 /**
  * One trade in a netting set, able to mark itself to market on a simulated path

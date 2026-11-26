@@ -17,7 +17,7 @@ package com.nablatensor.quant;
 
 import com.nablatensor.quant.MultiOutput;
 import com.nablatensor.quant.YieldCurve;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.SDouble;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -151,7 +151,7 @@ public final class MultiCurveBootstrap {
 
   // ---- the recorded two-stage recursion --------------------------------
 
-  private Map<String, SDouble> record(com.jax4j.engine.AadRecorder rec) {
+  private Map<String, SDouble> record(com.nablatensor.jax4j.engine.AadRecorder rec) {
     Map<String, SDouble> out = new LinkedHashMap<>();
 
     // Stage 1 — OIS discount curve. Integer-year DFs indexed by year.

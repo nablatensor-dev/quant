@@ -17,7 +17,7 @@ package com.nablatensor.credit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
@@ -146,7 +146,7 @@ class CdoTrancheTest {
   }
 
   private static double price(CopulaMarket m,
-      java.util.function.BiConsumer<com.jax4j.engine.AadRecorder, Nabla.Inputs<CopulaMarket>> v) {
+      java.util.function.BiConsumer<com.nablatensor.jax4j.engine.AadRecorder, Nabla.Inputs<CopulaMarket>> v) {
     try (Nabla.TypedEvaluator<CopulaMarket> p = Nabla.model(m, v).fp64().valueOnly().on("cpu-jit").build()) {
       return p.value().with(m).scenarios(600_000L).seed(42L).run().value();
     }

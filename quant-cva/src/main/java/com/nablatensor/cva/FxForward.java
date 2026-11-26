@@ -16,7 +16,7 @@
 package com.nablatensor.cva;
 
 import com.nablatensor.codegen.Of;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.SDouble;
 import java.util.Locale;
 
 /**

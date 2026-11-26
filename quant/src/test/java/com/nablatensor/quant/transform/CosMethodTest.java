@@ -17,7 +17,7 @@ package com.nablatensor.quant.transform;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import com.nablatensor.quant.HestonMarket;
 import com.nablatensor.quant.HestonModel;
 import com.nablatensor.quant.OptionType;
@@ -137,7 +137,7 @@ class CosMethodTest {
   }
 
   private static <M extends Record> double price(M market,
-      java.util.function.BiConsumer<com.jax4j.engine.AadRecorder, Nabla.Inputs<M>> v,
+      java.util.function.BiConsumer<com.nablatensor.jax4j.engine.AadRecorder, Nabla.Inputs<M>> v,
       long paths, long seed) {
     try (Nabla.TypedEvaluator<M> p = Nabla.model(market, v).fp64().valueOnly().on("cpu-jit").build()) {
       return p.value().with(market).scenarios(paths).seed(seed).run().value();

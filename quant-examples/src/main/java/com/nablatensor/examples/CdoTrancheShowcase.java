@@ -19,7 +19,7 @@ import com.nablatensor.credit.CdoTranche;
 import com.nablatensor.credit.CopulaMarket;
 import com.nablatensor.credit.CopulaMonteCarlo;
 import com.nablatensor.credit.PortfolioLossDistribution;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import java.util.Locale;
 
 /**

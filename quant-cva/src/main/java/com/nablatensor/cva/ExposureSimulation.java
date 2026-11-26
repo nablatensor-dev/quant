@@ -15,9 +15,9 @@
  */
 package com.nablatensor.cva;
 
-import com.jax4j.engine.AadRecorder;
-import com.jax4j.engine.Nabla;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.AadRecorder;
+import com.nablatensor.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.SDouble;
 import com.nablatensor.risk.TimeProfile;
 import java.util.function.BiConsumer;
 

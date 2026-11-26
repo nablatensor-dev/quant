@@ -16,8 +16,8 @@
 package com.nablatensor.cva;
 
 import com.nablatensor.quant.HullWhite1F;
-import com.jax4j.engine.AadRecorder;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.AadRecorder;
+import com.nablatensor.jax4j.engine.SDouble;
 
 /**
  * A one-factor Hull-White short rate as an on-tape step block, plus an analytic

@@ -17,9 +17,9 @@ package com.nablatensor.quant;
 
 import com.nablatensor.quant.OptionType;
 import com.nablatensor.quant.HullWhite1F;
-import com.jax4j.engine.AadRecorder;
-import com.jax4j.engine.Nabla;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.AadRecorder;
+import com.nablatensor.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.SDouble;
 import java.util.function.BiConsumer;
 
 /**

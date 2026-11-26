@@ -15,7 +15,7 @@
  */
 package com.nablatensor.examples;
 
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.SDouble;
 import com.nablatensor.quant.Calibrator;
 import com.nablatensor.quant.SabrHagan;
 import java.util.Locale;

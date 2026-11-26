@@ -18,9 +18,9 @@ package com.nablatensor.quant;
 import com.nablatensor.quant.MultiOutput;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import com.jax4j.engine.SDouble;
-import com.jax4j.engine.Nabla;
-import com.jax4j.ops.Smooth;
+import com.nablatensor.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.ops.Smooth;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import org.junit.jupiter.api.Tag;
@@ -39,7 +39,7 @@ class MultiOutputTest {
   private static final int STEPS = 20;
 
   /** Terminal-spot GBM with a call and a smoothed digital, sharing the path. */
-  private static Map<String, SDouble> measures(com.jax4j.engine.AadRecorder rec) {
+  private static Map<String, SDouble> measures(com.nablatensor.jax4j.engine.AadRecorder rec) {
     SDouble s0 = rec.input("S0", 100.0);
     SDouble k = rec.input("K", 100.0);
     SDouble vol = rec.input("sigma", 0.2);

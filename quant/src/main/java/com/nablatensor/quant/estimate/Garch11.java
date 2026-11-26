@@ -16,7 +16,7 @@
 package com.nablatensor.quant.estimate;
 
 import com.nablatensor.codegen.Of;
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.SDouble;
 import com.nablatensor.quant.Calibrator;
 import java.util.LinkedHashMap;
 import java.util.Map;

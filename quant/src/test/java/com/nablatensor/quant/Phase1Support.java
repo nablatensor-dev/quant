@@ -15,8 +15,8 @@
  */
 package com.nablatensor.quant;
 
-import com.jax4j.engine.AadRecorder;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.AadRecorder;
+import com.nablatensor.jax4j.engine.Nabla;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;

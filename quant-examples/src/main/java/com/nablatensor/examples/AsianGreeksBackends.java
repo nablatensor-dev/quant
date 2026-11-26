@@ -15,13 +15,13 @@
  */
 package com.nablatensor.examples;
 
-import com.jax4j.engine.AadEngine;
-import com.jax4j.engine.AadEngines;
-import com.jax4j.engine.AadOptions;
+import com.nablatensor.jax4j.engine.AadEngine;
+import com.nablatensor.jax4j.engine.AadEngines;
+import com.nablatensor.jax4j.engine.AadOptions;
 import com.nablatensor.quant.EquityMarket;
 import com.nablatensor.quant.MonteCarlo;
 import com.nablatensor.quant.Products;
-import com.jax4j.engine.Nabla;
+import com.nablatensor.jax4j.engine.Nabla;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;

@@ -15,7 +15,7 @@
  */
 package com.nablatensor.quant.estimate;
 
-import com.jax4j.engine.SDouble;
+import com.nablatensor.jax4j.engine.SDouble;
 import com.nablatensor.quant.Calibrator;
 
 /**
